@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ben的空间</title>
+    <link href="static/32.png" rel="icon" sizes="32x32"/>
+    <link href="static/192.png" rel="icon" sizes="192x192"/>
+    <meta name="viewport" content="width=device-width, maximum-scale=1, initial-scale=1"/>
+
+	
+		<!-- <body background="http://fp1.fghrsh.net/2021/03/28/adb046bdf4e5abfd0fe208abc3d9d181.jpg">-->
+    <style>
+        html, body, main{
+            height: 100%;
+        }
+
+        body{
+            margin: 0;
+            user-select: none;
+            font: lighter 16px "微软雅黑";
+        	width： 100% ;
+			height: 100% ;
+			background-image: url("http://fp1.fghrsh.net/2021/03/28/a5440f1252791125a3412e47fcf80b4f.png");
+			background-repeat: no-repeat;
+			background-size: 100% 100%;
+
+            
+        }
+
+
+
+        @keyframes bg-rotate {
+            0%{ transform: rotate(0) }
+            100%{ transform: rotate(360deg) }
+        }
+
+        a{
+            text-decoration: none;
+        }
+
+        main{
+            display: table;
+            margin: 0 auto;
+        }
+
+        .content{
+            padding-top: 50px;
+            padding-bottom: 70px;
+            text-align: center;
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .logo{
+            margin-bottom: 50px;
+        }
+        .logo img{
+            height: auto;
+            max-width: 100px;
+            border-radius: 100%;
+            border: 3px solid #fff;
+            transition: transform 0.3s;
+        }
+        .logo img:hover{
+            transform: scale(1.1, 1.1) rotate(1turn);
+        }
+
+        .links{
+            max-width: 300px;
+        }
+        .links a{
+            color: #fff;
+            display: block;
+            min-width: 80px;
+            padding: 1em 2em;
+            text-align: center;
+            margin-bottom: 1em;
+            border-radius: 100px;
+            border: #fff 1px solid;
+            transition: background 0.3s, color 0.3s, opacity 0.3s, transform 0.3s;
+        }
+        .links a:hover{
+            color: #258ec5;
+            background: #fff;
+            transform: scale(1.1, 1.1);
+        }
+        .links a:active{
+            opacity: 0.7;
+            transform: scale(0.9, 0.9);
+        }
+        .links a:last-child{
+            margin-bottom: 0;
+        }
+
+        footer{
+            left: 0;
+            right: 0;
+            bottom: 0;
+            color: #fff;
+            position: fixed;
+            text-align: center;
+        }
+        footer a{
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <div class="content">
+        <div class="logo">
+            <img src="http://fp1.fghrsh.net/2021/03/28/9acaf4ffa0c05e09eeaec7eb7ee38b2e.jpg" title="Ben的个人首页"/>
+        </div>
+        <div class="links">
+            <a href="https://weinb.top/">博客</a>
+            <a href="https://t.me/Ben_chao">Telegram</a>
+            <a href="https://github.com/666wcy" target="_blank">GitHub</a>
+
+        </div>
+    </div>
+</main>
+<footer>
+    <p>© 2021 By <a href="https://weinb.top/" target="_blank">Ben</a>.</p>
+</footer>
+</body>
+</html>
