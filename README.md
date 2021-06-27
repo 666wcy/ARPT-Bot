@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-06-27 16:17:19
+ * @LastEditTime: 2021-06-27 17:08:46
 -->
 
 
@@ -107,7 +107,8 @@ odshare - 下载公开的od分享链接文件并上传网盘
 
 Docker 部署命令：
 
-评论区反馈docker不支持arm架构，推测原因为原docker为amd64架构,目前只在amd64上测试成功
+~~评论区反馈docker不支持arm架构，推测原因为原docker为amd64架构,目前只在amd64上测试成功~~
+目前理论支持所含架构，具体没有进行真机测试
 
 ```
 docker run -d \
