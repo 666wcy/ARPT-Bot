@@ -121,7 +121,7 @@ docker run -d \
     -e Telegram_user_id=xxx \
     -e Upload=xxx \
     -p 8868:8868 \
-   benchao/arpt:v2.0.0
+   benchao/arpt:v2.0.1
 
 ```
 
@@ -179,6 +179,12 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 ![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.771n1tka9dg0.png)
 
 # 更新说明
+
+v2.0.1
+
+修复AriaNG面板404
+
+
 
 v2.0.0
 
