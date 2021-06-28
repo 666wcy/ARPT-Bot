@@ -45,6 +45,8 @@ RUN pip3 install pyromod
 RUN pip3 install psutil
 RUN pip3 install nest_asyncio
 
+RUN mkdir /index
+COPY /index.html /index
 
 RUN mkdir /bot
 COPY bot /bot
