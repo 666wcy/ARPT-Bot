@@ -1,9 +1,9 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-06-27 17:08:46
+ * @LastEditTime: 2021-06-29 11:54:03
 -->
-
+[toc]
 
 
 # 介绍
@@ -15,19 +15,16 @@
 主要功能:
 
 - [X] 文件管理
-
   - [X] 修改主界面为 [filebrowser](https://github.com/filebrowser/filebrowser)，账号为**admin**，密码为**admin**,主界面路径：http://ip:port,请自行修改密码
   - [X] ~~[FolderMagic](https://github.com/FolderMagic/FolderMagic)自带的webdav：路径:http://ip:port/webdav 。账号密码同FolderMagic，不支持网页端，需要支持webdav的软件(在Raildrive上测试成功)~~ 由于其只支持amd64架构，使用[filebrowser](https://github.com/filebrowser/filebrowser)将其代替
 
 - [X] 网页面板
-
   - [X] 支持 [AriaNg](https://github.com/mayswind/AriaNg) 面板,地址为：https://ip:port/ng/
   - [X] ~~新增 [ServerStatus-Hotaru](https://github.com/cokemine/ServerStatus-Hotaru) 作为容器探针。探针地址:http://ip:port/status/~~ 鸡肋功能，删除
   - [X] 用**Nginx**为内部端口反代，替换原来的的Python Flask，更加轻量
 
 
 - [X] Aria2
-
   - [X] 自动化安装Aria2，自定义密钥
   - [X] 用Bot进行简单的Aria2端控制(添加任务、暂停任务、删除任务)
   - [X] 显示下载进度
@@ -49,13 +46,12 @@
   - [ ] 获取单个或多个文件夹的分享链接(gd,od)
   
 - [X] Pixiv
-
   - [X] 根据pid获取图片
   - [X] 下载画师的全部作品，支持打包上传网盘、打包发送tg、图片方式发送tg、telegraph(网页)方式发送图片。打包格式为zip。
   - [X] 下载日榜，周榜、月榜，支持打包上传网盘、打包发送tg、图片方式发送tg、telegraph(网页)方式发送图片。打包格式为zip。
   - [X] 支持指定日期的榜单下载
-- [X] 影音相关
 
+- [X] 影音相关
   - [X] 使用YouTube-dl下载视频，支持上传网盘或发送到tg。默认最高画质，目前完美适配YouTube和哔哩哔哩(不含番剧)
   - [X] 网易云音乐下载，支持id下载，搜索下载，整个歌单下载，支持发送到tg和上传网盘
   - [X] 新增将视频转为MP3格式发送、上传
@@ -63,7 +59,6 @@
   - [ ] 常用影音格式格式互转
 
 - [X] Telegram
-
   - [X] 只有当前用户的命令生效
   - [X] 发送file id获取文件
   - [X] 发送文件获取file id
@@ -121,7 +116,7 @@ docker run -d \
     -e Telegram_user_id=xxx \
     -e Upload=xxx \
     -p 8868:8868 \
-   benchao/arpt:v2.0.1
+   benchao/arpt:v2.0.2
 
 ```
 
@@ -159,7 +154,7 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 则端口为8868
 面板密钥填docker创建时你的Aria2_secret值
 
-#bug说明
+# bug说明
 1.下载文件时概率性出现99%，实际已完成上传，尚未解决
 
 ~~2.pixiv发送图片给我时概率性出现[400 PHOTO_INVALID_DIMENSIONS]: The photo dimensions are invalid (caused by "messages.UploadMedia")的错误，尚未找到原因~~1.1.7版本以后已修复，不符合尺寸的图片不进行发送(暴力解决)
@@ -182,9 +177,7 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 
 v2.0.1
 
-修复AriaNG面板404
-
-
+修复docker构建时rclone安装失败，修复网易云歌单下载到无版权音乐时整个歌单下载停止
 
 v2.0.0
 
