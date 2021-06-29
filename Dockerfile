@@ -8,6 +8,7 @@ RUN echo 'Asia/Shanghai' >/etc/timezone
 RUN apt-get install wget -y
 RUN apt-get install git -y
 RUN apt-get install curl -y
+RUN apt-get install unzip -y
 RUN sudo apt install python3 -y
 RUN sudo apt install python3-dev -y
 RUN sudo apt install python3-pip -y

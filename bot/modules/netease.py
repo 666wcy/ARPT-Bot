@@ -234,16 +234,16 @@ def downloadplaylist(client, call):
         song_info = requests.get(url=song_info_url, headers=headers)
         try:
             if song_info.json()['data'][0]['url'] == None:
-                client.edit_message_text(text="此歌曲不支持获取歌曲链接", chat_id=info.chat.id,
+                client.edit_message_text(text=f"此歌曲不支持获取歌曲链接", chat_id=info.chat.id,
                                          message_id=info.message_id,
                                          parse_mode='markdown')
-                break
+                continue
             url = song_info.json()['data'][0]['url']
         except Exception as e:
             client.edit_message_text(text=f"无法获取刚获取歌曲链接:\n`{e}`", chat_id=info.chat.id,
                                          message_id=info.message_id,
                                          parse_mode='markdown')
-            break
+            continue
 
         song_name_info_url = f"https://benchaonetease.vercel.app/song/detail?ids={song_id}"
         song_name_info = requests.get(url=song_name_info_url)
@@ -308,7 +308,7 @@ def downloadplaylist(client, call):
         run_rclone(path, f"歌单{playlist}", info=info, file_num=2, client=client, message=info)
         os.system(f"rm -rf \"{path}\"")
 
-    
+
 
 
 
