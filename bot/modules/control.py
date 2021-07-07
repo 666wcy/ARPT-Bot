@@ -41,77 +41,94 @@ async def downloadFiles(client,info,originalPath, req, layers, start=1, num=-1, 
         req = requests.session()
     # print(header)
     reqf = req.get(originalPath, headers=header)
-    #print(reqf.text)
+    if "-my" not in originalPath:
+        isSharepoint = True
+        print("sharepoint 链接")
+    else:
+        isSharepoint = False
 
+    # f=open()
     if ',"FirstRow"' not in reqf.text:
-        print("\t"*layers, "这个文件夹没有文件")
+        print("\t" * layers, "这个文件夹没有文件")
         return 0
 
-    p = re.search(
+    pat = re.search(
         'g_listData = {"wpq":"","Templates":{},"ListData":{ "Row" : ([\s\S]*?),"FirstRow"', reqf.text)
-    jsonData = json.loads(p.group(1))
-    redURL = reqf.url
-    redsURL = redURL.split("/")
-    query = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(redURL).query))
-    downloadURL = "/".join(redsURL[:-1])+"/download.aspx?UniqueId="
+    jsonData = json.loads(pat.group(1))
+    redirectURL = reqf.url
+    redirectSplitURL = redirectURL.split("/")
+    query = dict(urllib.parse.parse_qsl(
+        urllib.parse.urlsplit(redirectURL).query))
+    downloadURL = "/".join(redirectSplitURL[:-1]) + "/download.aspx?UniqueId="
+    if isSharepoint:
+        pat = re.search('templateUrl":"(.*?)"', reqf.text)
 
-    s2 = urllib.parse.urlparse(redURL)
-    header["referer"] = redURL
+        downloadURL = pat.group(1)
+        downloadURL = urllib.parse.urlparse(downloadURL)
+        downloadURL = "{}://{}{}".format(downloadURL.scheme,
+                                         downloadURL.netloc, downloadURL.path).split("/")
+        downloadURL = "/".join(downloadURL[:-1]) + \
+                      "/download.aspx?UniqueId="
+        print(downloadURL)
+
+    # print(reqf.headers)
+
+    s2 = urllib.parse.urlparse(redirectURL)
+    header["referer"] = redirectURL
     header["cookie"] = reqf.headers["set-cookie"]
     header["authority"] = s2.netloc
 
     headerStr = ""
     for key, value in header.items():
         # print(key+':'+str(value))
-        headerStr += key+':'+str(value)+"\n"
+        headerStr += key + ':' + str(value) + "\n"
 
     fileCount = 0
     # print(headerStr)
-    temp_id=query['id']
     for i in jsonData:
-        query['id']=temp_id
         if i['FSObjType'] == "1":
-            print("\t"*layers, "文件夹：",
+            print("\t" * layers, "文件夹：",
                   i['FileLeafRef'], "\t独特ID：", i["UniqueId"], "正在进入")
+            _query = query.copy()
+            _query['id'] = os.path.join(
+                _query['id'], i['FileLeafRef']).replace("\\", "/")
+            if not isSharepoint:
+                originalPath = "/".join(redirectSplitURL[:-1]) + \
+                               "/onedrive.aspx?" + urllib.parse.urlencode(_query)
+            else:
+                originalPath = "/".join(redirectSplitURL[:-1]) + \
+                               "/AllItems.aspx?" + urllib.parse.urlencode(_query)
 
-            query['id'] = os.path.join(
-                query['id'],  i['FileLeafRef']).replace("\\", "/")
 
-            originalPath = "/".join(redsURL[:-1]) + \
-                "/onedrive.aspx?" + urllib.parse.urlencode(query)
-            # print(originalPath)
-            fileCount += await downloadFiles(client,info,originalPath, req, layers+1,_id=fileCount, start=start, num=num)
+            fileCount += await downloadFiles(client, info, originalPath, req, layers + 1, _id=fileCount, start=start,
+                                             num=num)
         else:
             fileCount += 1
-            if num == -1 or start <= fileCount < start+num:
-                print("\t"*layers, "文件 [%d]：%s\t独特ID：%s\t正在推送" %
-                      (fileCount+_id, i['FileLeafRef'],  i["UniqueId"]))
-                #print(str(query['id']).split("Documents",1)[1])
-
-                cc = downloadURL+(i["UniqueId"][1:-1].lower())
-                download_path=f"/root/Download{str(query['id']).split('Documents',1)[1]}"
-                dd = dict(out=i["FileLeafRef"],  header=headerStr,dir=download_path)
+            if num == -1 or start <= fileCount + _id < start + num:
+                print("\t" * layers, "文件 [%d]：%s\t独特ID：%s\t正在推送" %
+                      (fileCount + _id, i['FileLeafRef'], i["UniqueId"]))
+                cc = downloadURL + (i["UniqueId"][1:-1].lower())
+                download_path = f"/root/Download{str(query['id']).split('Documents', 1)[1]}"
+                dd = dict(out=i["FileLeafRef"], header=headerStr, dir=download_path)
+                print(cc, dd)
                 aria2Link = "http://localhost:8080/jsonrpc"
-                aria2Secret =os.environ.get('Aria2_secret')
+                aria2Secret = os.environ.get('Aria2_secret')
                 jsonreq = json.dumps({'jsonrpc': '2.0', 'id': 'qwer',
                                       'method': 'aria2.addUri',
-                                      "params": ["token:"+aria2Secret, [cc], dd]})
+                                      "params": ["token:" + aria2Secret, [cc], dd]})
 
-                c = requests.post(aria2Link , data=jsonreq)
+                c = requests.post(aria2Link, data=jsonreq)
                 pprint(json.loads(c.text))
-                text=f"推送下载：`{i['FileLeafRef']}`\n下载路径:`{download_path}`\n推送结果:`{c.text}`"
+                text = f"推送下载：`{i['FileLeafRef']}`\n下载路径:`{download_path}`\n推送结果:`{c.text}`"
                 try:
                     await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
-                                               parse_mode='markdown')
+                                                   parse_mode='markdown')
                 except Exception as e:
                     print(f"修改信息失败:{e}")
                 time.sleep(0.5)
-
-
             else:
-                print("\t"*layers, "文件 [%d]：%s\t独特ID：%s\t非目标文件" %
-                      (fileCount+_id, i['FileLeafRef'],  i["UniqueId"]))
-
+                print("\t" * layers, "文件 [%d]：%s\t独特ID：%s\t非目标文件" %
+                      (fileCount + _id, i['FileLeafRef'], i["UniqueId"]))
     return fileCount
 
 async def odshare_download(client, message):
