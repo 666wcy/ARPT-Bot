@@ -1,9 +1,8 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-07-07 22:40:12
+ * @LastEditTime: 2021-07-18 11:13:14
 -->
-[toc]
 
 
 # 介绍
@@ -67,7 +66,12 @@
   - [ ] 添加Bot白名单
   - [ ] 支持群组内使用。Ps:已有群组版本，正在考虑如何混合适配
 
-即将考虑合并[搜图机器人](https://weinb.top/index.php/archives/93/)相关功能
+- [X] 图片相关
+  - [X] 合并[搜图机器人](https://github.com/666wcy/search_photo-telegram-bot-heroku)，支持[saucenao](https://saucenao.com/)、[WhatAnime](https://trace.moe/)、[ascii2d](https://ascii2d.net/)、[iqdb](http://www.iqdb.org/)
+  - [X] 搜索下载哔咔的本子，支持ZIP文件格式发送到TG和上传网盘
+  - [X] 对接 [nhentai](https://github.com/RicterZ/nhentai),下载nhentai本子并支持以ZIP文件格式发送TG、ZIP格式上传网盘、网页格式发送到TG
+ 
+
 
 # Bot command
 
@@ -174,6 +178,15 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 ![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.771n1tka9dg0.png)
 
 # 更新说明
+
+v2.0.4
+
+合并[搜图机器人](https://github.com/666wcy/search_photo-telegram-bot-heroku)，支持[saucenao](https://saucenao.com/)、[WhatAnime](https://trace.moe/)、[ascii2d](https://ascii2d.net/)、[iqdb](http://www.iqdb.org/)
+
+搜索下载哔咔的本子，支持ZIP文件格式发送到TG和上传网盘
+
+对接 [nhentai](https://github.com/RicterZ/nhentai),下载nhentai本子并支持以ZIP文件格式发送TG、ZIP格式上传网盘、网页格式发送到TG
+
 
 v2.0.3
 

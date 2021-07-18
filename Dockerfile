@@ -46,6 +46,9 @@ RUN pip3 install pyromod
 RUN pip3 install psutil
 RUN pip3 install nest_asyncio
 
+RUN pip3 install nhentai --upgrade
+RUN pip3 install beautifulsoup4 --upgrade
+
 RUN mkdir /index
 COPY /index.html /index
 

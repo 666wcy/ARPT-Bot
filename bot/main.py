@@ -15,6 +15,8 @@ from modules.picacg import seach_main
 from modules.rclone import start_rclonecopy, start_rclonelsd, start_rclonels, start_rclonecopyurl
 from modules.video import start_get_video_info
 from modules.netease import get_song_info,search_song_list,edit_song_info,get_song_list_info,downloadplaylist
+from modules.nhentai import download_nhentai_id
+from modules.photo import send_photo,saucenao,ascii2d,anime,iqdb,search_all_photo
 import hashlib
 import os
 import datetime
@@ -62,6 +64,14 @@ async def help(client, message):
 /magnet - 推送磁力链接至aria2下载
 /odshare - 下载od公开分享链接，链接权限至少为任何人可查看
 以上在命令后加入链接
+
+********** 图片相关 **********
+直接发送图片即可选择搜索图片
+
+/nhentai id tg - 下载nhentai中对应id的本子压缩包格式发送到TG
+参数说明:tg-ZIP格式发送到TG，rclone-ZIP格式上传到网盘，tele-网页格式发送给我
+
+/search 搜索词 - 在哔咔中搜索本子，支持ZIP上传到网盘和发送到TG
 
 ********** 其它相关 **********
 /downtgfile - 发送TG文件并上传至网盘
@@ -251,6 +261,12 @@ def start_bot():
 
     )
 
+    download_nhentai_id_handler = MessageHandler(
+        download_nhentai_id,
+        filters=filters.command("nhentai") & filters.user(int(Telegram_user_id))
+
+    )
+
 
     start_Resume_handler = CallbackQueryHandler(
         callback=start_Resume,
@@ -302,9 +318,35 @@ def start_bot():
         filters=filters.create(lambda _, __, query: "playlist" in query.data)
     )
 
+    start_send_photo_handler = MessageHandler(
+        send_photo,
 
+        filters=filters.photo & filters.user(int(Telegram_user_id))
+    )
 
+    saucenao_handler = CallbackQueryHandler(
+        callback=saucenao,
+        filters=filters.create(lambda _, __, query: "saucenao" == query.data)
+    )
+    ascii2d_handler = CallbackQueryHandler(
+        callback=ascii2d,
+        filters=filters.create(lambda _, __, query: "ascii2d" == query.data)
+    )
+    anime_handler = CallbackQueryHandler(
+        callback=anime,
+        filters=filters.create(lambda _, __, query: "WhatAnime" == query.data)
+    )
+    iqdb_handler = CallbackQueryHandler(
+        callback=iqdb,
+        filters=filters.create(lambda _, __, query: "iqdb" == query.data)
+    )
 
+    search_all_photo_handler = CallbackQueryHandler(
+        callback=search_all_photo,
+        filters=filters.create(lambda _, __, query: "allsearchphoto" == query.data)
+    )
+
+    client.add_handler(search_all_photo_handler, group=0)
     client.add_handler(start_download_video_handler, group=0)
     client.add_handler(start_Resume_handler, group=0)
     client.add_handler(start_pause_handler, group=0)
@@ -344,6 +386,14 @@ def start_bot():
     client.add_handler(edit_song_info_handler, group=1)
     client.add_handler(get_song_list_info_handler, group=1)
     client.add_handler(downloadplaylist_handler, group=1)
+    client.add_handler(download_nhentai_id_handler, group=1)
+
+    client.add_handler(start_send_photo_handler, group=1)
+    client.add_handler(saucenao_handler, group=1)
+    client.add_handler(ascii2d_handler, group=1)
+    client.add_handler(anime_handler, group=1)
+    client.add_handler(iqdb_handler, group=1)
+
 
 
 
