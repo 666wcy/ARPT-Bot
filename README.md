@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-07-18 11:13:14
+ * @LastEditTime: 2021-07-22 22:57:49
 -->
 
 
@@ -70,6 +70,9 @@
   - [X] 合并[搜图机器人](https://github.com/666wcy/search_photo-telegram-bot-heroku)，支持[saucenao](https://saucenao.com/)、[WhatAnime](https://trace.moe/)、[ascii2d](https://ascii2d.net/)、[iqdb](http://www.iqdb.org/)
   - [X] 搜索下载哔咔的本子，支持ZIP文件格式发送到TG和上传网盘
   - [X] 对接 [nhentai](https://github.com/RicterZ/nhentai),下载nhentai本子并支持以ZIP文件格式发送TG、ZIP格式上传网盘、网页格式发送到TG
+  - [X] 本子的搜索，支持哔咔、ehentai、nhentai
+  - [X] saucenao搜图支持快捷搜索
+
  
 
 
@@ -100,6 +103,11 @@ neteaseid - 通过id获取歌曲信息
 searchsong - 搜索网易云音乐歌曲
 playlist - 获取歌单信息
 odshare - 下载公开的od分享链接文件并上传网盘
+nhentai - 下载nhentai中对应id的本子
+ehentai - 下载nhentai中对应id的本子
+picacgsearch - 在哔咔中搜索本子，支持ZIP上传到网盘和发送到TG
+ehentaisearch - 在ehentai中搜索本子，支持ZIP上传到网盘和发送到TG、发送网页
+nhentaisearch - 在nhentai中搜索本子，支持ZIP上传到网盘和发送到TG、发送网页
 ```
 
 # 安装
@@ -120,7 +128,7 @@ docker run -d \
     -e Telegram_user_id=xxx \
     -e Upload=xxx \
     -p 8868:8868 \
-   benchao/arpt:v2.0.3
+   benchao/arpt:v2.0.5
 
 ```
 
@@ -178,6 +186,14 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 ![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.771n1tka9dg0.png)
 
 # 更新说明
+
+v2.0.5
+
+新增本子的搜索，此版本支持哔咔、ehentai、nhentai
+
+nhentai支持直接识别链接下载
+
+新增
 
 v2.0.4
 

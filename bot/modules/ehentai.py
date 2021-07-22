@@ -1,19 +1,37 @@
-import subprocess
+# -*- coding: utf-8 -*-
+import requests
 import time
-import sys
+import os
+from bs4 import BeautifulSoup
 import re
 import zipfile
 import os
 import telegraph
+import sys
 from modules.control import run_await_rclone
 from modules.pixiv import compress_image, put_telegraph
-import requests
 from lxml import etree
 from pyrogram.types import InlineKeyboardMarkup,InlineKeyboardButton
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 '
-                  'Safari/537.36'}
+                  'Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Upgrade-Insecure-Requests': '1'}
+
+def progessbar(new, tot):
+    """Builds progressbar
+    Args:
+        new: current progress
+        tot: total length of the download
+    Returns:
+        progressbar as a string of length 20
+    """
+    length = 20
+    progress = int(round(length * new / float(tot)))
+    percent = round(new/float(tot) * 100.0, 1)
+    bar = '=' * progress + '-' * (length - progress)
+    return '[%s] %s %s\r' % (bar, percent, '%')
 
 def del_path(path):
     if not os.path.exists(path):
@@ -54,37 +72,118 @@ def zip_ya(start_dir):
     z.close()
     return file_news
 
-async def download_nhentai_id_call(client, call):
+def saveFile(url, path):
+
+    response = requests.get(url, headers=headers)
+    with open(path, 'wb') as f:
+        f.write(response.content)
+        f.flush()
+
+
+def getPicUrl(url):
+
+    site_2 = requests.get(url, headers=headers)
+    content_2 = site_2.text
+    soup_2 = BeautifulSoup(content_2, 'lxml')
+    imgs = soup_2.find_all(id="img")
+    for img in imgs:
+        picSrc = img['src']
+        return picSrc
+
+async def getWebsite(url, time1, spath,pagenum,client, info):
+
+    site = requests.get(url, headers=headers)
+    content = site.text
+    soup = BeautifulSoup(content, 'lxml')
+    divs = soup.find_all(class_='gdtm')
+    title = soup.h1.get_text()
+    rr = r"[\/\\\:\*\?\"\<\>\|]"
+    new_title2 = re.sub(rr, "-", title)
+    page = 0
+    i = 0
+    for div in divs:
+        picUrl = div.a.get('href')
+        page = page + 1
+        print('下载中 ' + new_title2 + str(page) + '.jpg')
+
+
+        try:
+            saveFile(getPicUrl(picUrl), spath + new_title2 + '/' + str(page).zfill(3) + '.jpg')
+            print('下载成功: ' + new_title2 + str(page) + '.jpg')
+            barop = progessbar(page, pagenum)
+            text=f"下载进度:\n{barop}"
+            await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                           parse_mode='markdown')
+
+        except:
+            print('无法下载' + new_title2 + str(page) + '.jpg')
+        else:
+            print('成功')
+            i = i + 1
+    print('成功 下载' + str(page) + ' 个文件,' + str(i))
+    endTime1 = time.time()
+    m, s = divmod(int(endTime1 - time1), 60)
+    h, m = divmod(m, 60)
+    print("%02d时%02d分%02d秒" % (h, m, s))
+    if h != 0:
+        last_time = "%d时%d分%d秒" % (h, m, s)
+    elif h == 0 and m != 0:
+        last_time = "%d分%d秒" % (m, s)
+    else:
+        last_time = "%d秒" % s
+
+    text=f"下载完成:`{new_title2}`\n成功下载:`{str(page)}个文件`，耗时：`{last_time}`"
+    await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                   parse_mode='markdown')
+    filepath=spath + new_title2
+    return filepath
+
+
+async def single_download_call(client, call):
     try:
         message=call.message
-        nhentai_id_temp= call.data.split(" ")[1]
-        nhentai_id=re.findall(r"\d+\.?\d*", nhentai_id_temp)[0]
-        info = await client.send_message(text="获取到ID，正在下载", chat_id=message.chat.id,
-                            parse_mode='markdown' )
-        shell = f"nhentai --id={nhentai_id} --format \'%t\'"
-        print(shell)
-        cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True, stdout=subprocess.PIPE,
-                               universal_newlines=True, shell=True, bufsize=1)
-        # 实时输出
+        url = call.data.split(" ", 1)[1]
 
-        while True:
 
-            if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
 
-                result = str(cmd.stdout.read())
-                break
+        spath = "/ehentai/"
+        if os.path.exists(spath)==False:
+            os.mkdir(spath)
 
-        print(result)
-        if "All done" in result:
-            path = re.findall("Path \'(.*?)\' does not exist, creating", result, re.S)[0]
-            print(f"下载路径:{path}")
-            await client.edit_message_text(text=f"下载成功,下载路径:\n{path}", chat_id=info.chat.id, message_id=info.message_id,
-                                     parse_mode='markdown')
+        print('保存路径:', spath)
+        startTime1 = time.time()
+        print('--获取信息中--')
+
+        info = await client.send_message(chat_id=message.chat.id, text='--获取信息中--', parse_mode='markdown')
+        try:
+
+
+            site = requests.get(url, headers=headers)
+            content = site.text
+            soup = BeautifulSoup(content, 'lxml')
+            divs = soup.find_all(class_='gdtm')
+            title = str(soup.h1.get_text())
+            page = 0
+            for div in divs:
+                page = page + 1
+        except Exception as e:
+            print(f'错误,输入或网络问题:{e}')
+            await client.edit_message_text(text=f'错误,输入或网络问题:{e}', chat_id=info.chat.id, message_id=info.message_id,
+                                           parse_mode='markdown')
+
         else:
-            print("下载失败")
-            await client.edit_message_text(text="下载失败", chat_id=info.chat.id, message_id=info.message_id,
-                                     parse_mode='markdown')
-            return
+            print('本子名 ' + title + ',共 ' + str(page) + ' 页,开始爬取')
+            text='本子名 ' + title + ',共 ' + str(page) + ' 页,开始爬取'
+            await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                           parse_mode='markdown')
+            rr = r"[\/\\\:\*\?\"\<\>\|]"
+            new_title = re.sub(rr, "-", title)
+            if os.path.exists(spath + new_title):
+                path = await getWebsite(url, startTime1, spath,page,client, info)
+            else:
+                os.mkdir(spath + new_title)
+                path = await getWebsite(url, startTime1, spath,page,client, info)
+
         try:
             choice = call.data.split(" ")[2]
         except:
@@ -229,47 +328,54 @@ async def download_nhentai_id_call(client, call):
             del_path(path)
             return
 
+    except Exception as e:
+        print(f"single_download:{e}")
+        await client.send_message(chat_id=message.chat.id, text=f'下载失败:{e}', parse_mode='markdown')
 
-
-    except Exception as e :
-        print(f"download_hentai_id error : {e}")
-        await client.send_message(text=f"download_hentai_id error : {e}", chat_id=message.chat.id,
-                            parse_mode='markdown')
-
-async def download_nhentai_id(client, message):
+async def single_download(client, message):
     try:
-        nhentai_id_temp = message.text.split(" ")[1]
-        if "https" in nhentai_id_temp:
-            nhentai_id_temp = message.text.split(" ")[1]
-            nhentai_id = re.findall(r"\d+\.?\d*", nhentai_id_temp)[0]
+        url = message.text.split(" ", 1)[1]
+
+
+
+        spath = "/ehentai/"
+        if os.path.exists(spath)==False:
+            os.mkdir(spath)
+
+        print('保存路径:', spath)
+        startTime1 = time.time()
+        print('--获取信息中--')
+
+        info = await client.send_message(chat_id=message.chat.id, text='--获取信息中--', parse_mode='markdown')
+        try:
+
+
+            site = requests.get(url, headers=headers)
+            content = site.text
+            soup = BeautifulSoup(content, 'lxml')
+            divs = soup.find_all(class_='gdtm')
+            title = str(soup.h1.get_text())
+            page = 0
+            for div in divs:
+                page = page + 1
+        except Exception as e:
+            print(f'错误,输入或网络问题:{e}')
+            await client.edit_message_text(text=f'错误,输入或网络问题:{e}', chat_id=info.chat.id, message_id=info.message_id,
+                                           parse_mode='markdown')
+
         else:
-            nhentai_id=nhentai_id_temp
-        info = await client.send_message(text="获取到ID，正在下载", chat_id=message.chat.id,
-                            parse_mode='markdown' )
-        shell = f"nhentai --id={nhentai_id} --format \'%t\'"
-        print(shell)
-        cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True, stdout=subprocess.PIPE,
-                               universal_newlines=True, shell=True, bufsize=1)
-        # 实时输出
+            print('本子名 ' + title + ',共 ' + str(page) + ' 页,开始爬取')
+            text='本子名 ' + title + ',共 ' + str(page) + ' 页,开始爬取'
+            await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                           parse_mode='markdown')
+            rr = r"[\/\\\:\*\?\"\<\>\|]"
+            new_title = re.sub(rr, "-", title)
+            if os.path.exists(spath + new_title):
+                path = await getWebsite(url, startTime1, spath,page,client, info)
+            else:
+                os.mkdir(spath + new_title)
+                path = await getWebsite(url, startTime1, spath,page,client, info)
 
-        while True:
-
-            if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
-
-                result = str(cmd.stdout.read())
-                break
-
-        print(result)
-        if "All done" in result:
-            path = re.findall("Path \'(.*?)\' does not exist, creating", result, re.S)[0]
-            print(f"下载路径:{path}")
-            await client.edit_message_text(text=f"下载成功,下载路径:\n{path}", chat_id=info.chat.id, message_id=info.message_id,
-                                     parse_mode='markdown')
-        else:
-            print("下载失败")
-            await client.edit_message_text(text="下载失败", chat_id=info.chat.id, message_id=info.message_id,
-                                     parse_mode='markdown')
-            return
         try:
             choice = message.text.split(" ")[2]
         except:
@@ -414,41 +520,33 @@ async def download_nhentai_id(client, message):
             del_path(path)
             return
 
+    except Exception as e:
+        print(f"single_download:{e}")
+        await client.send_message(chat_id=message.chat.id, text=f'下载失败:{e}', parse_mode='markdown')
 
 
-    except Exception as e :
-        print(f"download_hentai_id error : {e}")
-        await client.send_message(text=f"download_hentai_id error : {e}", chat_id=message.chat.id,
-                            parse_mode='markdown')
-
-
-async def get_search_nhentai_info(client, message):
+async def get_search_ehentai_info(client, message):
     if "CallbackQuery" in str(message):
 
         message=message.message
         keyword = str(message.caption).split("\n", 1)[0]
         keyword=str(keyword).replace("标题:","")
+        print(f"搜索词：{keyword}")
     else:
         keyword = str(message.text).split(" ", 1)[1]
 
-    search_url=f"https://nhentai.net/search/?q={keyword}"
+    search_url = f"https://e-hentai.org/?f_search={keyword}&advsearch=1&f_sname=on&f_stags=on&f_sdesc=on&f_spf=&f_spt="
 
     search_result = requests.get(search_url, headers=headers)
 
-
     lxml_result = etree.HTML(search_result.text)
-    title_list = lxml_result.xpath('//*[@id="content"]/div[2]/div/a/div/text()')
-
-    link_temp_list = lxml_result.xpath('//*[@id="content"]/div[2]/div/a/@href')
+    title_list = lxml_result.xpath('/html/body/div[2]/div[2]/table[2]/tr/td[3]/a/div[1]/text()')
+    link_list = lxml_result.xpath('/html/body/div[2]/div[2]/table[2]/tr/td[3]/a/@href')
+    img_list = lxml_result.xpath('/html/body/div[2]/div[2]/table[2]/tr/td[2]/div[2]/div[1]/img/@data-src')
+    # print(title_list)
     if len(title_list)==0:
         await client.send_message(chat_id=message.chat.id, text="搜索无结果", parse_mode='markdown')
         return
-    link_list=[]
-    for a in link_temp_list:
-        link_list.append(str("https://nhentai.net"+a))
-
-    img_list = lxml_result.xpath('//*[@id="content"]/div[2]/div/a/img/@data-src')
-
     for title, link, img in zip(title_list, link_list, img_list):
         print(title, link, img)
         text = f"标题:{title}\n链接地址:{link}"
@@ -456,15 +554,15 @@ async def get_search_nhentai_info(client, message):
             [
                 InlineKeyboardButton(
                     text="上传网盘",
-                    callback_data=f"nhentai {link} rclone"
+                    callback_data=f"ehentai {link} rclone"
                 )], [
                 InlineKeyboardButton(
                     text="发送本子到TG",
-                    callback_data=f"nhentai {link} tg"
+                    callback_data=f"ehentai {link} tg"
                 )], [
                 InlineKeyboardButton(
                     text="网页格式发送",
-                    callback_data=f"nhentai {link} tele"
+                    callback_data=f"ehentai {link} tele"
                 )
             ]
         ]
@@ -472,3 +570,6 @@ async def get_search_nhentai_info(client, message):
         new_reply_markup = InlineKeyboardMarkup(inline_keyboard=new_inline_keyboard)
         await client.send_photo(chat_id=message.chat.id, photo=str(img), caption=text, reply_markup=new_reply_markup,
                                 parse_mode='markdown')
+
+
+

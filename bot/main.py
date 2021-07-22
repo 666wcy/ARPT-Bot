@@ -9,14 +9,15 @@ from modules.pixiv import start_download_pixiv, start_download_id, start_downloa
     start_download_pixivtele,author,pixiv_topall,start_download_pixiv_top,pixiv_topillustration
 from modules.control import send_telegram_file, start_http_download, start_download, start_http_downloadtg, \
     check_upload, get_free_space_mb, odshare_download
-from modules.call import start_pause, start_remove, start_Resume, start_benzi_down, start_download_video,start_get_author_info,get_song_url_info
+from modules.call import start_pause, start_remove, start_Resume, start_benzi_down, start_download_video,start_get_author_info,get_song_url_info,book_search_all_call
 from modules.moretg import get_telegram_file, get_file_id, sendfile_by_id
 from modules.picacg import seach_main
 from modules.rclone import start_rclonecopy, start_rclonelsd, start_rclonels, start_rclonecopyurl
 from modules.video import start_get_video_info
 from modules.netease import get_song_info,search_song_list,edit_song_info,get_song_list_info,downloadplaylist
-from modules.nhentai import download_nhentai_id
+from modules.nhentai import download_nhentai_id,download_nhentai_id_call,get_search_nhentai_info
 from modules.photo import send_photo,saucenao,ascii2d,anime,iqdb,search_all_photo
+from modules.ehentai import single_download,single_download_call,get_search_ehentai_info
 import hashlib
 import os
 import datetime
@@ -69,9 +70,13 @@ async def help(client, message):
 直接发送图片即可选择搜索图片
 
 /nhentai id tg - 下载nhentai中对应id的本子压缩包格式发送到TG
+id可以换为链接，Bot会自动识别
+/ehentai ehentai链接 tg - 下载nhentai中对应id的本子压缩包格式发送到TG
 参数说明:tg-ZIP格式发送到TG，rclone-ZIP格式上传到网盘，tele-网页格式发送给我
 
-/search 搜索词 - 在哔咔中搜索本子，支持ZIP上传到网盘和发送到TG
+/picacgsearch 搜索词 - 在哔咔中搜索本子，支持ZIP上传到网盘和发送到TG
+/ehentaisearch 搜索词 - 在ehentai中搜索本子，支持ZIP上传到网盘和发送到TG
+/nhentaisearch 搜索词 - 在nhentai中搜索本子，支持ZIP上传到网盘和发送到TG
 
 ********** 其它相关 **********
 /downtgfile - 发送TG文件并上传至网盘
@@ -177,7 +182,7 @@ def start_bot():
     )
     seach_main_file_message_handler = MessageHandler(
         seach_main,
-        filters=filters.command("search") & filters.user(int(Telegram_user_id))
+        filters=filters.command("picacgsearch") & filters.user(int(Telegram_user_id))
     )
 
 
@@ -267,6 +272,38 @@ def start_bot():
 
     )
 
+    single_download_handler = MessageHandler(
+        single_download,
+        filters=filters.command("ehentai") & filters.user(int(Telegram_user_id))
+    )
+
+    get_search_ehentai_info_handler = MessageHandler(
+        get_search_ehentai_info,
+        filters=filters.command("ehentaisearch") & filters.user(int(Telegram_user_id))
+    )
+
+    get_search_nhentai_info_handler = MessageHandler(
+        get_search_nhentai_info,
+        filters=filters.command("nhentaisearch") & filters.user(int(Telegram_user_id))
+    )
+
+    book_search_all_call_handler = CallbackQueryHandler(
+        callback=book_search_all_call,
+        filters=filters.create(lambda _, __, query: "search" in query.data)
+    )
+
+    download_nhentai_id_call_handler = CallbackQueryHandler(
+        callback=download_nhentai_id_call,
+        filters=filters.create(lambda _, __, query: "nhentai" in query.data)
+    )
+
+
+
+    single_download_call_handler = CallbackQueryHandler(
+        callback=single_download_call,
+        filters=filters.create(lambda _, __, query: "ehentai" in query.data)
+    )
+
 
     start_Resume_handler = CallbackQueryHandler(
         callback=start_Resume,
@@ -320,7 +357,6 @@ def start_bot():
 
     start_send_photo_handler = MessageHandler(
         send_photo,
-
         filters=filters.photo & filters.user(int(Telegram_user_id))
     )
 
@@ -393,6 +429,16 @@ def start_bot():
     client.add_handler(ascii2d_handler, group=1)
     client.add_handler(anime_handler, group=1)
     client.add_handler(iqdb_handler, group=1)
+    client.add_handler(single_download_handler, group=1)
+    client.add_handler(single_download_call_handler, group=1)
+    client.add_handler(get_search_ehentai_info_handler, group=1)
+    client.add_handler(get_search_nhentai_info_handler, group=1)
+    client.add_handler(download_nhentai_id_call_handler, group=1)
+    client.add_handler(book_search_all_call_handler, group=1)
+
+
+
+
 
 
 

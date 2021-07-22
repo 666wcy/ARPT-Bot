@@ -2,9 +2,11 @@
 from config import aria2
 from modules.picacg import add_download,add_downloadtg
 from modules.video import Download_video
-from modules.pixiv import start_download_pixiv,  start_download_pixivtg, start_download_pixivphoto, \
-    start_download_pixivtele
+from modules.pixiv import start_download_pixiv,  start_download_pixivtg, start_download_pixivphoto,start_download_pixivtele
 from modules.netease import http_downloadsong
+from modules.ehentai import get_search_ehentai_info
+from modules.nhentai import get_search_nhentai_info
+from modules.picacg import seach
 import sys
 import requests
 import time
@@ -110,6 +112,14 @@ async def start_get_author_info(client, message):
 
         await start_download_pixiv(client=client, call=message)
 
+async def book_search_all_call(client, call):
+    print(call)
+    if "searche" in call.data:
+        await get_search_ehentai_info(client,call)
+    elif "searchn" in call.data:
+        await get_search_nhentai_info(client,call)
+    elif "searchp" in call.data:
+        seach(client,call)
 
 
 def get_song_url_info(client, call):

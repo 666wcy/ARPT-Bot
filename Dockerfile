@@ -48,6 +48,7 @@ RUN pip3 install nest_asyncio
 
 RUN pip3 install nhentai --upgrade
 RUN pip3 install beautifulsoup4 --upgrade
+RUN pip3 install lxml --upgrade
 
 RUN mkdir /index
 COPY /index.html /index

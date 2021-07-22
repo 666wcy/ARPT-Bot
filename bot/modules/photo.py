@@ -1,11 +1,10 @@
-import sys
+
 import os
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import time
-import base64
+
 import re
-import datetime
-from urllib import parse
+
+from lxml import etree
 from bs4 import BeautifulSoup
 import requests
 session =requests.session()
@@ -74,9 +73,6 @@ def saucenao(client, message):
         }
         #files = { "file": ('saber.jpg', open("saber.jpg", "rb", , "image/png")}
 
-
-
-
         file = client.download_media(message=message.message)
 
 
@@ -84,62 +80,58 @@ def saucenao(client, message):
 
         #files = {"file": ("saucenao.jpg", file, "image/png")}
         client.send_message(chat_id=message.message.chat.id,text="正在搜索saucenao")
-        r = session.post(url=url, headers=Header, data=payloaddata,files=files)
-        #r = session .get(url=url,headers=Header)
-        soup = BeautifulSoup(r.text, 'html.parser')
+        search_result = session.post(url=url, headers=Header, data=payloaddata,files=files)
+
         #print(soup.prettify())
-        result=0
-        choice=0
-        for img in soup.find_all('div', attrs={'class': 'result'}):  # 找到class="wrap"的div里面的所有<img>标签
-            #print(img)
-            if('hidden' in str(img['class']))==False:
-                try:
-                    name=img.find("div",attrs={'class': 'resulttitle'}).get_text()
-                    img_url=str(img.img['src'])
-                    describe_list=img.find("div",attrs={'class': 'resultcontentcolumn'})
-                    url_list = img.find("div", attrs={'class': 'resultcontentcolumn'}).find_all("a",  attrs={'class': 'linkify'})
-                    similarity = str(img.find("div", attrs={'class': 'resultsimilarityinfo'}).get_text())
-                    print(name)
-                except:
-                    continue
-                try:
-                    describe = str(url_list[0].previous_sibling.string)
-                    describe_id = str(url_list[0].string)
-                    describe_url = str(url_list[0]['href'])
-                    auther_url = str(url_list[1]['href'])
-                    auther = str(url_list[1].previous_sibling.string)
-                    auther_id = str(url_list[1].string)
-                    '''print(name)
-                    print(img_url)
-                    print(describe)
-                    print(describe_id)
-                    print(similarity)
-                    print(auther)
-                    print(auther_id)
-                    print(describe_url)'''
-                    text = f"{name}\n{describe}[{describe_id}]({describe_url})\n{auther}:[{auther_id}]({auther_url})\n相似度{similarity}"
-                except:
-                    '''print(describe_list.get_text())
-                    print(describe_list.strong.string)
-                    print(describe_list.strong.next_sibling.string)
-                    print(describe_list.small.string)
-                    print(describe_list.small.next_sibling.next_sibling.string)'''
-                    auther = str(describe_list.strong.string)
-                    auther_id = str(describe_list.strong.next_sibling.string)
-                    describe = str(describe_list.small.string) + "\n" + str(describe_list.small.next_sibling.next_sibling.string)
-                    text = f"{name}\n{auther}:{auther_id}\n{describe}\n相似度{similarity}"
 
-                #photo_file = session.get(img_url)
-                client.send_photo(chat_id=message.message.chat.id,photo=img_url,parse_mode='markdown',caption=text)
+        lxml_result = etree.HTML(search_result.text)
+        title_list = lxml_result.xpath('//*[@id="middle"]/div/table/tr/td[2]/div[2]/div[1]/strong/text()')
+        info_list = lxml_result.xpath('//*[@id="middle"]/div/table/tr/td[2]/div[2]/div[1]/small/text()')
+        similarity_list = lxml_result.xpath('//*[@id="middle"]/div/table/tr/td[2]/div[1]/div[1]/text()')
+        img_list = lxml_result.xpath('//*[@id="middle"]/div/table/tr/td[1]/div/a/img/@src')
+        link_list = lxml_result.xpath('//*[@id="middle"]/div/table/tr/td[1]/div/a/@href')
+        print(title_list)
+        print(info_list)
+        print(similarity_list)
+        print(img_list)
+        print(link_list)
+        for title, info, similarity, img, link in zip(title_list, info_list, similarity_list, img_list, link_list):
+            text = f"标题:`{title}`\n" \
+                   f"简介:`{info}`\n" \
+                   f"相似度:`{similarity}`\n" \
+                   f"[更多信息]({link})"
+            try:
+                new_inline_keyboard = [
+                    [
+                        InlineKeyboardButton(
+                            text="搜索ehentai",
+                            callback_data=f"searche {str(title)[0:32]}"
+                        )], [
+                        InlineKeyboardButton(
+                            text="搜索nhentai",
+                            callback_data=f"searchn {str(title)[0:32]}"
+                        )], [
+                        InlineKeyboardButton(
+                            text="搜索哔咔",
+                            callback_data=f"searchp {str(title)[0:32]}"
+                        )
+                    ]
+                ]
 
+                new_reply_markup = InlineKeyboardMarkup(inline_keyboard=new_inline_keyboard)            
+                
+                client.send_photo(chat_id=message.message.chat.id,photo=img,reply_markup=new_reply_markup,parse_mode='markdown',caption=text)
+            except Exception as e:
+                print(e)
+                continue
 
-                result=1
-        if result==0:
-            client.send_message(chat_id=message.message.chat.id, text="saucenao无结果")
         os.remove(file)
     except Exception as e:
         print(f"saucenao:{e}")
-        os.remove(file)
+        try:
+            os.remove(file)
+        except:
+            None
 
 
 def ascii2d(client, message):
@@ -294,7 +286,7 @@ def iqdb(client, message):
     except Exception as e:
         print(f"iqdb faild:{e}")
         os.remove(file)
-        
+
 
 def search_all_photo(client, message):
     saucenao(client, message)

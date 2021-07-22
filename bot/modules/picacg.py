@@ -280,9 +280,15 @@ def seach(client, message):
         sys.stdout.flush()
         check()
         # bot.reply_to(message, message.text)
-        keywords = str(message.text)
-        # print(message.chat.type)
-        keywords = keywords.replace("/search ", "")
+
+        if "CallbackQuery" in str(message):
+
+            message = message.message
+            keyword = str(message.caption).split("\n", 1)[0]
+            keywords = str(keyword).replace("标题:", "")
+        else:
+            keywords = str(message.text).split(" ", 1)[1]
+
         PostData = {
             "categories": "",  # 限定的分区，可以不加
             "keyword": keywords,  # 必选参数，搜索的关键词
@@ -308,7 +314,7 @@ def seach(client, message):
             new_inline_keyboard = [
                 [
                     InlineKeyboardButton(
-                        text="下载本子",
+                        text="上传网盘",
                         callback_data=f"down"
                     ),
                     InlineKeyboardButton(
@@ -525,5 +531,4 @@ def seach_main(client, message):
     t1 = threading.Thread(target=seach, args=(client, message))
     t1.start()
     return
-
 
