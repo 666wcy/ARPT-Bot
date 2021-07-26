@@ -8,7 +8,7 @@ from pyrogram import filters
 from modules.pixiv import start_download_pixiv, start_download_id, start_download_pixivtg, start_download_pixivphoto, \
     start_download_pixivtele,author,pixiv_topall,start_download_pixiv_top,pixiv_topillustration
 from modules.control import send_telegram_file, start_http_download, start_download, start_http_downloadtg, \
-    check_upload, get_free_space_mb, odshare_download
+    check_upload, get_free_space_mb, odshare_download,odprivate_download
 from modules.call import start_pause, start_remove, start_Resume, start_benzi_down, start_download_video,start_get_author_info,get_song_url_info,book_search_all_call
 from modules.moretg import get_telegram_file, get_file_id, sendfile_by_id
 from modules.picacg import seach_main
@@ -63,8 +63,11 @@ async def help(client, message):
 /mirror - 推送直链至aria2下载上传至网盘
 /mirrortg - 推送直链至aria2下载发送到TG
 /magnet - 推送磁力链接至aria2下载
-/odshare - 下载od公开分享链接，链接权限至少为任何人可查看
-以上在命令后加入链接
+/odshare - 下载od-sp公开分享链接上传到网盘，链接权限至少为任何人可查看
+/odprivate - 下载域内的od、sp分享链接上传到网盘
+示例：
+/odshare 链接 密码 ，无密码则不加参数
+/odprivate 账号 密码 链接
 
 ********** 图片相关 **********
 直接发送图片即可选择搜索图片
@@ -287,6 +290,11 @@ def start_bot():
         filters=filters.command("nhentaisearch") & filters.user(int(Telegram_user_id))
     )
 
+    odprivate_download_handler = MessageHandler(
+        odprivate_download,
+        filters=filters.command("odprivate") & filters.user(int(Telegram_user_id))
+    )
+
     book_search_all_call_handler = CallbackQueryHandler(
         callback=book_search_all_call,
         filters=filters.create(lambda _, __, query: "search" in query.data)
@@ -435,6 +443,8 @@ def start_bot():
     client.add_handler(get_search_nhentai_info_handler, group=1)
     client.add_handler(download_nhentai_id_call_handler, group=1)
     client.add_handler(book_search_all_call_handler, group=1)
+    client.add_handler(odprivate_download_handler, group=1)
+
 
 
 

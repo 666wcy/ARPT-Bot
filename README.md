@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-07-22 22:57:49
+ * @LastEditTime: 2021-07-26 15:04:54
 -->
 
 
@@ -102,7 +102,8 @@ video - 发送视频链接
 neteaseid - 通过id获取歌曲信息
 searchsong - 搜索网易云音乐歌曲
 playlist - 获取歌单信息
-odshare - 下载公开的od分享链接文件并上传网盘
+odshare - 下载公开的od、sp分享链接文件并上传网盘
+odprivate - 下载域内的od、sp分享链接上传到网盘
 nhentai - 下载nhentai中对应id的本子
 ehentai - 下载nhentai中对应id的本子
 picacgsearch - 在哔咔中搜索本子，支持ZIP上传到网盘和发送到TG
@@ -128,7 +129,7 @@ docker run -d \
     -e Telegram_user_id=xxx \
     -e Upload=xxx \
     -p 8868:8868 \
-   benchao/arpt:v2.0.5
+   benchao/arpt:v2.0.6
 
 ```
 
@@ -187,13 +188,22 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 
 # 更新说明
 
+v2.0.6
+
+新增带有密码的公开分享链接的od、sp分享链接下载
+
+新增需要登录账号的分享链接下载，需要同域账号的账号和密码
+
+优化上述推送完成的显示
+
+
 v2.0.5
 
 新增本子的搜索，此版本支持哔咔、ehentai、nhentai
 
 nhentai支持直接识别链接下载
 
-新增
+
 
 v2.0.4
 
