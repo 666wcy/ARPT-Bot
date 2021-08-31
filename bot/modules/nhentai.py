@@ -153,7 +153,7 @@ async def download_nhentai_id_call(client, call):
                                                parse_mode='markdown')
                 return
             try:
-                await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info)
+                await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info,gid=0)
                 print("uploading")
             except Exception as e:
                 print(f"{e}")
@@ -244,8 +244,7 @@ async def download_nhentai_id(client, message):
             nhentai_id = re.findall(r"\d+\.?\d*", nhentai_id_temp)[0]
         else:
             nhentai_id=nhentai_id_temp
-        info = await client.send_message(text="获取到ID，正在下载", chat_id=message.chat.id,
-                            parse_mode='markdown' )
+        info = await client.send_message(text="获取到ID，正在下载", chat_id=message.chat.id,parse_mode='markdown' )
         shell = f"nhentai --id={nhentai_id} --format \'%t\'"
         print(shell)
         cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True, stdout=subprocess.PIPE,
@@ -263,22 +262,29 @@ async def download_nhentai_id(client, message):
         if "All done" in result:
             path = re.findall("Path \'(.*?)\' does not exist, creating", result, re.S)[0]
             print(f"下载路径:{path}")
-            await client.edit_message_text(text=f"下载成功,下载路径:\n{path}", chat_id=info.chat.id, message_id=info.message_id,
+            try:
+                await client.edit_message_text(text=f"下载成功,下载路径:\n{path}", chat_id=info.chat.id, message_id=info.message_id,
                                      parse_mode='markdown')
+            except:
+                None
         else:
             print("下载失败")
             await client.edit_message_text(text="下载失败", chat_id=info.chat.id, message_id=info.message_id,
                                      parse_mode='markdown')
             return
         try:
+            print("开始获取参数")
             choice = message.text.split(" ")[2]
-        except:
+            print("成功获取参数")
+        except Exception as e:
+            print(f"没有默认参数 : {e}")
 
 
             try:
                 name = zip_ya(path)
                 print(name)
                 print("压缩完成，开始上传")
+                time.sleep(1)
                 await client.edit_message_text(text="压缩完成，开始上传", chat_id=info.chat.id, message_id=info.message_id,
                                                parse_mode='markdown')
                 del_path(path)
@@ -338,13 +344,13 @@ async def download_nhentai_id(client, message):
                                                parse_mode='markdown')
                 return
             try:
-                await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info)
+                await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info,gid=0)
                 print("uploading")
             except Exception as e:
                 print(f"{e}")
                 sys.stdout.flush()
                 client.send_message(info.chat.id, text=f"文件上传失败:\n{e}")
-            client.delete_message(info.chat.id, info.message_id)
+            client.delete_messages(info.chat.id, info.message_id)
             os.system("rm '" + name + "'")
 
         elif choice=="tele" :

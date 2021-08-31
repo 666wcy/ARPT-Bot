@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from config import aria2, BOT_name
+from config import aria2, BOT_name,Rclone_share
 import sys
 from pyrogram.types import InlineKeyboardMarkup,InlineKeyboardButton
 import os
@@ -399,7 +399,7 @@ async def odprivate_download(client, message):
 
 def check_upload(api, gid):
 
-    time.sleep(15)
+    time.sleep(10)
     global task
     print(f"检查上传 {task}")
     sys.stdout.flush()
@@ -409,40 +409,39 @@ def check_upload(api, gid):
         print("任务已删除，不需要上传")
         sys.stdout.flush()
         return
-    dir=currdownload.dir
+
     key=1
     if len(task)!=0:
         for a in task:
-            if a == dir:
+            if a == gid:
                 key=0
                 print("该任务存在，不需要上传")
                 sys.stdout.flush()
-                task.remove(a)
+                #task.remove(a)
+                return
     if key==1:
         if "[METADATA]"==currdownload.name:
             return
-        Rclone_remote = os.environ.get('Remote')
-        Upload = os.environ.get('Upload')
+
         file_dir = f"{currdownload.dir}/{currdownload.name}"
         file_num = int(len(currdownload.files))
         print(f"上传该任务:{file_dir}")
         sys.stdout.flush()
-        name=currdownload.name
+
         shell=f"bash upload.sh \"{gid}\" \"{file_num}\" '{file_dir}' "
 
         print(shell)
         cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True,
                                stdout=subprocess.PIPE, universal_newlines=True, shell=True, bufsize=1)
-
         while True:
             time.sleep(2)
             if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
                 print("上传结束")
                 return
 
-async def run_await_rclone(dir,title,info,file_num,client, message):
+async def run_await_rclone(dir,title,info,file_num,client, message,gid):
     global task
-    task.append(dir)
+    task.append(gid)
     print(task)
     sys.stdout.flush()
     Rclone_remote=os.environ.get('Remote')
@@ -504,12 +503,30 @@ async def run_await_rclone(dir,title,info,file_num,client, message):
         if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
             print("上传结束")
             try:
-                client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
-            except:
-                None
-            os.remove(f"{name}.log")
-            task.remove(dir)
-            return
+                if Rclone_share == False:
+                    await client.send_message(text=f"{title}\n上传结束", chat_id=info.chat.id)
+                    break
+                else:
+                    if int(file_num) == 1:
+                        file_name = os.path.basename(dir)
+                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{file_name}\" --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+                    else:
+                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{title}\"  --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+                    print(f"获取分享链接:{upload_shell}")
+                    val = os.popen(upload_shell)
+                    share_url = val.read()
+                    await client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
+                    os.remove(f"{name}.log")
+                    task.remove(gid)
+                    break
+            except Exception as e:
+                print(e)
+                try:
+                    os.remove(f"{name}.log")
+                    task.remove(gid)
+                    break
+                except:
+                    break
 
     return
 
@@ -722,7 +739,7 @@ def the_download(client, message,url):
             print("开始上传")
             file_dir=f"{currdownload.dir}/{currdownload.name}"
             files_num=int(len(currdownload.files))
-            run_rclone(file_dir,currdownload.name,info=info,file_num=files_num,client=client,message=message)
+            run_rclone(file_dir,currdownload.name,info=info,file_num=files_num,client=client,message=message,gid=currdownload.gid)
             currdownload.remove(force=True,files=True)
 
         except Exception as e:
@@ -731,7 +748,7 @@ def the_download(client, message,url):
     return None
 
 
-#@bot.message_handler(commands=['magnet'],func=lambda message:str(message.chat.id) == str(Telegram_user_id))
+
 def start_download(client, message):
     try:
         keywords = str(message.text)
@@ -749,9 +766,9 @@ def start_download(client, message):
     except Exception as e:
         print(f"magnet :{e}")
 
-def run_rclone(dir,title,info,file_num,client, message):
+def run_rclone(dir,title,info,file_num,client, message,gid):
     global task
-    task.append(dir)
+    task.append(gid)
     print(task)
     sys.stdout.flush()
     Rclone_remote=os.environ.get('Remote')
@@ -802,16 +819,33 @@ def run_rclone(dir,title,info,file_num,client, message):
         if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
             print("上传结束")
             try:
-                client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
-            except:
-                None
-            os.remove(f"{name}.log")
-            task.remove(dir)
-            return
+                if Rclone_share==False:
+                    client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
+                else:
+                    if int(file_num) == 1:
+                        file_name = os.path.basename(dir)
+                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{file_name}\" --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+                    else:
+                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{title}\"  --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+                    print(f"获取分享链接:{upload_shell}")
+                    val = os.popen(upload_shell)
+                    share_url = val.read()
+                    client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
+                    os.remove(f"{name}.log")
+                    task.remove(gid)
+                    return
+            except Exception as e:
+                print(e)
+                try:
+                    os.remove(f"{name}.log")
+                    task.remove(gid)
+                    return
+                except:
+                    return
 
     return
 
-#@bot.message_handler(commands=['mirror'],func=lambda message:str(message.chat.id) == str(Telegram_user_id))
+
 def start_http_download(client, message):
     try:
         keywords = str(message.text)
@@ -932,7 +966,7 @@ def file_download(client, message,file_dir):
                     break
                 print(e)
                 print("Issue in downloading!")
-                time.sleep(2)
+
         elif currdownload.status == "paused":
             try:
                 currdownload.update()
@@ -953,11 +987,11 @@ def file_download(client, message,file_dir):
                         prevmessage = updateText
                     except:
                         None
-                time.sleep(2)
+
             except Exception as e:
                 print(e)
                 print("Download Paused Flood")
-                time.sleep(2)
+
 
 
 
@@ -968,7 +1002,7 @@ def file_download(client, message,file_dir):
             print("开始上传")
             file_dir=f"{currdownload.dir}/{currdownload.name}"
             files_num=int(len(currdownload.files))
-            run_rclone(file_dir,currdownload.name,info=info,file_num=files_num,client=client, message=message)
+            run_rclone(file_dir,currdownload.name,info=info,file_num=files_num,client=client, message=message,gid=currdownload.gid)
             currdownload.remove(force=True,files=True)
             return
 
@@ -1105,7 +1139,7 @@ def http_download(client, message,url):
         try:
             print("开始上传")
             file_dir=f"{currdownload.dir}/{currdownload.name}"
-            run_rclone(file_dir,currdownload.name,info=info,file_num=1,client=client, message=message)
+            run_rclone(file_dir,currdownload.name,info=info,file_num=1,client=client, message=message,gid=currdownload.gid)
             currdownload.remove(force=True,files=True)
 
         except Exception as e:
@@ -1161,7 +1195,23 @@ def progress(current, total,client,message,name):
         print("e")
 
 
-
+async def more_magnet(client, message):
+    try:
+        text=message.text
+        if "magnet" in text:
+            if "\n" in text:
+                
+                magnet_list=str(text).split("\n")
+                for magnet in magnet_list:
+                    t1 = threading.Thread(target=the_download, args=(client, message, magnet))
+                    t1.start()
+                         
+            else:      
+                t1 = threading.Thread(target=the_download, args=(client, message,text))
+                t1.start()
+    except Exception as e :
+        print(f"more_magnet error :{e}")
+        await client.send_message(chat_id=message.chat.id, text=f"more_magnet error :{e}")
 
 
 async def temp_telegram_file(client, message):

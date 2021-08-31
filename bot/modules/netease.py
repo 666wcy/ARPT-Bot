@@ -194,7 +194,7 @@ def http_downloadsong(client, message,url, file_name,picpath,towhere):
             os.remove(filepath)
         elif "rclone" in str(towhere):
 
-            run_rclone(filepath, "music", info=info, file_num=1, client=client, message=message)
+            run_rclone(filepath, "music", info=info, file_num=1, client=client, message=message,gid=0)
             os.remove(filepath)
 
 
@@ -261,15 +261,13 @@ def downloadplaylist(client, call):
 
         client.edit_message_text(chat_id=info.chat.id, message_id=info.message_id, text=f"{song_name}开始下载", parse_mode='markdown')
 
-
-
-
-        start = time.time()  # 下载开始时间
-        response = requests.get(url, stream=True)
-        size = 0  # 初始化已下载大小
-        chunk_size = 1024  # 每次下载的数据大小
-        content_size = int(response.headers['content-length'])  # 下载文件总大小
         try:
+            start = time.time()  # 下载开始时间
+            response = requests.get(url, stream=True)
+            size = 0  # 初始化已下载大小
+            chunk_size = 2048  # 每次下载的数据大小
+            content_size = int(response.headers['content-length'])  # 下载文件总大小
+        
             if response.status_code == 200:  # 判断是否响应成功
                 print('Start download,[File size]:{size:.2f} MB'.format(
                     size=content_size / chunk_size / 1024))  # 开始下载，显示下载文件大小
@@ -309,7 +307,7 @@ def downloadplaylist(client, call):
             continue
 
     if "rclone" in str(call.data):
-        run_rclone(path, f"歌单{playlist}", info=info, file_num=2, client=client, message=info)
+        run_rclone(path, f"歌单{playlist}", info=info, file_num=2, client=client, message=info,gid=0)
         os.system(f"rm -rf \"{path}\"")
     if "tg" in str(call.data):
         client.send_message(chat_id=call.message.chat.id, text="上传结束", parse_mode='markdown')

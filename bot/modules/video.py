@@ -1,34 +1,30 @@
-
 import threading
 import requests
 from config import App_title
 import youtube_dl
-from pyrogram.types import InlineKeyboardMarkup,InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from modules.control import run_rclone
 import sys
 import requests
 import os
 import time
 
+temp_time = time.time()
 
-temp_time= time.time()
 
-def progress(current, total,client,message,name):
-
+def progress(current, total, client, message, name):
     print(f"{current * 100 / total:.1f}%")
-    pro=f"{current * 100 / total:.1f}%"
+    pro = f"{current * 100 / total:.1f}%"
     try:
-        client.edit_message_text(chat_id=message.chat.id,message_id=message.message_id,text=f"{name}\n上传中:{pro}")
+        client.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=f"{name}\n上传中:{pro}")
     except Exception as e:
         print("e")
 
 
 class Download_video():
 
-
-    def download_video_status(self,d):
+    def download_video_status(self, d):
         global temp_time
-
 
         if d['status'] == 'downloading':
             time_end = time.time()
@@ -37,23 +33,21 @@ class Download_video():
             else:
                 temp_time = time.time()
                 # print(d)
-                text="下载中 " + d['_percent_str'] + " " + d['_speed_str']
+                text = "下载中 " + d['_percent_str'] + " " + d['_speed_str']
                 try:
                     self.client.edit_message_text(text=text, chat_id=self.info.chat.id, message_id=self.info.message_id,
-                                         parse_mode='markdown')
-                    if App_title!="":
+                                                  parse_mode='markdown')
+                    if App_title != "":
                         print("视频正在下载,保持唤醒")
                         print(requests.get(url=f"https://{App_title}.herokuapp.com/"))
                         sys.stdout.flush()
                 except:
                     None
 
-
-
-    def __init__(self,client, call):
-        #调用父类的构函
-        self.client=client
-        self.call=call
+    def __init__(self, client, call):
+        # 调用父类的构函
+        self.client = client
+        self.call = call
 
     def download_video(self):
         try:
@@ -67,15 +61,13 @@ class Download_video():
             web_url = re.findall("web_url:(.*?)\n", caption, re.S)[0]
             print(web_url)
             sys.stdout.flush()
-            
+
             ydl_opts = {
                 'format': "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best[ext=flv]/best' --merge-output-format mp4",
                 'quiet': True,
                 'no_warnings': True,
                 'progress_hooks': [self.download_video_status]
             }
-
-	        
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 result = ydl.extract_info(
@@ -92,52 +84,49 @@ class Download_video():
         self.client.edit_message_text(text=f"{video_name}\n下载完成，开始上传", chat_id=self.info.chat.id,
                                       message_id=self.info.message_id,
                                       parse_mode='markdown')
-        if "rclone" in self.call.data :
+        if "rclone" in self.call.data:
             print(f"{video_name}上传到网盘")
 
             sys.stdout.flush()
-            if "video" in self.call.data :
-                run_rclone(video_name, video_name, info=self.info, file_num=1, client=self.client, message=self.info)
+            if "video" in self.call.data:
+                run_rclone(video_name, video_name, info=self.info, file_num=1, client=self.client, message=self.info,gid=0)
                 os.remove(video_name)
-                self.client.delete_messages(chat_id=self.call.message.chat.id,message_ids=self.call.message.message_id)
-            elif "mp3" in self.call.data :
+                self.client.delete_messages(chat_id=self.call.message.chat.id, message_ids=self.call.message.message_id)
+            elif "mp3" in self.call.data:
                 tem, suffix = os.path.splitext(video_name)
-                print(tem, suffix) # test   .py
+                print(tem, suffix)  # test   .py
                 self.client.edit_message_text(text=f"开始转码", chat_id=self.info.chat.id,
-                                      message_id=self.info.message_id,
-                                      parse_mode='markdown')
-                audio_name=tem+".mp3"
+                                              message_id=self.info.message_id,
+                                              parse_mode='markdown')
+                audio_name = tem + ".mp3"
                 os.system(f"ffmpeg -i \"{video_name}\" -f mp3 -vn \"{audio_name}\"")
-                run_rclone(audio_name, audio_name, info=self.info, file_num=1, client=self.client, message=self.info)
+                run_rclone(audio_name, audio_name, info=self.info, file_num=1, client=self.client, message=self.info,gid=0)
                 os.remove(video_name)
-                self.client.delete_messages(chat_id=self.call.message.chat.id,message_ids=self.call.message.message_id)
+                self.client.delete_messages(chat_id=self.call.message.chat.id, message_ids=self.call.message.message_id)
                 os.remove(audio_name)
 
         else:
             print(f"{video_name}发送到TG")
 
             sys.stdout.flush()
-            if "video" in self.call.data :
-                self.client.send_video(chat_id=self.call.message.chat.id,video=video_name,caption=caption ,progress=progress,
-                                           progress_args=(self.client, self.info, video_name,))
-            elif "mp3" in self.call.data :
+            if "video" in self.call.data:
+                self.client.send_video(chat_id=self.call.message.chat.id, video=video_name, caption=caption,
+                                       progress=progress,
+                                       progress_args=(self.client, self.info, video_name,))
+            elif "mp3" in self.call.data:
                 tem, suffix = os.path.splitext(video_name)
-                print(tem, suffix) # test   .py
+                print(tem, suffix)  # test   .py
                 self.client.edit_message_text(text=f"开始转码", chat_id=self.info.chat.id,
-                                      message_id=self.info.message_id,
-                                      parse_mode='markdown')
-                audio_name=tem+".mp3"
+                                              message_id=self.info.message_id,
+                                              parse_mode='markdown')
+                audio_name = tem + ".mp3"
                 os.system(f"ffmpeg -i \"{video_name}\" -f mp3 -vn \"{audio_name}\"")
-                self.client.send_audio(chat_id=self.call.message.chat.id,audio=audio_name ,progress=progress,
-                                           progress_args=(self.client, self.info, audio_name,))
+                self.client.send_audio(chat_id=self.call.message.chat.id, audio=audio_name, progress=progress,
+                                       progress_args=(self.client, self.info, audio_name,))
                 os.remove(audio_name)
-            
+
             os.remove(video_name)
             self.client.delete_messages(chat_id=self.call.message.chat.id, message_ids=self.call.message.message_id)
-
-
-
-
 
 
 def get_video_info(client, message, url):
@@ -150,16 +139,16 @@ def get_video_info(client, message, url):
             download=False,
 
         )
-        #print(result)
-        video_name=result['title']
-        video_description=result['description']
-        video_img=result['thumbnails'][len(result['thumbnails'])-1]["url"]
-        video_uploader=result['uploader']
-        web_url=result['webpage_url']
-        text=f"视频名称：{video_name}\n" \
-             f"作者:{video_uploader}\n" \
-             f"web_url:{web_url}\n" \
-             f"简介：{video_description}\n"
+        # print(result)
+        video_name = result['title']
+        video_description = result['description']
+        video_img = result['thumbnails'][len(result['thumbnails']) - 1]["url"]
+        video_uploader = result['uploader']
+        web_url = result['webpage_url']
+        text = f"视频名称：{video_name}\n" \
+               f"作者:{video_uploader}\n" \
+               f"web_url:{web_url}\n" \
+               f"简介：{video_description}\n"
         print(text)
         print(video_img)
         sys.stdout.flush()
@@ -189,20 +178,16 @@ def get_video_info(client, message, url):
             )
         ]
 
-
-
     ]
     img = requests.get(url=video_img)
-    img_name=f"{message.chat.id}{message.message_id}.png"
+    img_name = f"{message.chat.id}{message.message_id}.png"
     with open(img_name, 'wb') as f:
         f.write(img.content)
         f.close()
     new_reply_markup = InlineKeyboardMarkup(inline_keyboard=new_inline_keyboard)
-    client.send_photo(caption=text[0:1024], photo=img_name,chat_id=message.chat.id,
-                             parse_mode='markdown', reply_markup=new_reply_markup)
+    client.send_photo(caption=text[0:1024], photo=img_name, chat_id=message.chat.id,
+                      parse_mode='markdown', reply_markup=new_reply_markup)
     os.remove(img_name)
-
-
 
 
 def start_get_video_info(client, message):

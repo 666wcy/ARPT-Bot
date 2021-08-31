@@ -65,7 +65,7 @@ def tgfile_download(client, message, new_message):
         print("开始上传")
         file_dir = file
         files_num = 1
-        run_rclone(file_dir, file_name, info=info, file_num=files_num, client=client, message=message)
+        run_rclone(file_dir, file_name, info=info, file_num=files_num, client=client, message=message,gid=0)
         os.remove(path=file)
         return
 

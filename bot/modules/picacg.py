@@ -424,7 +424,7 @@ def add_download(client,call):
         print("压缩完成，开始上传")
         del_path(title)
         try:
-            run_rclone(dir=name,title=title,info=info,file_num=1,client=client,message=call)
+            run_rclone(dir=name,title=title,info=info,file_num=1,client=client,message=call,gid=0)
             print("uploading")
         except Exception as e:
             print(f"{e}")

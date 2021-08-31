@@ -2,13 +2,13 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 import sys
 from modules.check import new_clock, second_clock
-from config import client, Telegram_user_id, aria2
+from config import client, Telegram_user_id, aria2,Error_user_info,App_title
 from pyrogram.handlers import MessageHandler, CallbackQueryHandler
 from pyrogram import filters
 from modules.pixiv import start_download_pixiv, start_download_id, start_download_pixivtg, start_download_pixivphoto, \
     start_download_pixivtele,author,pixiv_topall,start_download_pixiv_top,pixiv_topillustration
 from modules.control import send_telegram_file, start_http_download, start_download, start_http_downloadtg, \
-    check_upload, get_free_space_mb, odshare_download,odprivate_download
+    check_upload, get_free_space_mb, odshare_download,odprivate_download,more_magnet
 from modules.call import start_pause, start_remove, start_Resume, start_benzi_down, start_download_video,start_get_author_info,get_song_url_info,book_search_all_call
 from modules.moretg import get_telegram_file, get_file_id, sendfile_by_id
 from modules.picacg import seach_main
@@ -27,20 +27,33 @@ starttime = datetime.datetime.now()
 
 
 async def chexk_group(_, client, query):
-    print(query)
+    print("检查使用权限")
+    #print(query)
     try:
-        info = await client.get_chat_member(chat_id=int(Telegram_user_id), user_id=query.from_user.id)
-        print(info)
-        sys.stdout.flush()
-        return True
-    except:
+        if "-" in str(Telegram_user_id):
+            info = await client.get_chat_member(chat_id=int(Telegram_user_id), user_id=query.from_user.id)
+
+
+
+            sys.stdout.flush()
+            return True
+        else:
+            if str(query.from_user.id)==str(Telegram_user_id):
+                return True
+
+    except Exception as e:
+        await client.send_message(chat_id=query.from_user.id, text=Error_user_info)
+        print(f"获取权限失败：{e}")
         return False
 
 
 async def help(client, message):
     print(client)
     print(message)
-    text = '''********** pixiv相关 **********
+    text = '''
+直接发送磁力链接可直接添加任务，默认上传网盘，支持多个磁力（换行分隔）
+直接发送图片可进行搜图    
+********** pixiv相关 **********
 /pixivauthor - 对Pixiv画师作品进行操作
 在命令后加入作品ID，使用示例
 /pixivauthor 9675329
@@ -129,17 +142,18 @@ async def status(client, message):
     else:
         last_time = "%d秒" % s
     text = f"Bot正在运行，已运行时间:`{last_time}`\n磁盘剩余空间:`{get_free_space_mb()}GB`"
-    await client.send_message(chat_id=int(Telegram_user_id), text=text, parse_mode='markdown')
+    await client.send_message(chat_id=message.from_user.id, text=text, parse_mode='markdown')
 
 
 def start_bot():
     # scheduler = BlockingScheduler()
-    scheduler = BackgroundScheduler()
+    if App_title=="":
+        scheduler = BackgroundScheduler()
 
-    scheduler.add_job(new_clock, "interval", seconds=60)
-    scheduler.add_job(second_clock, "interval", seconds=60)
-    scheduler.start()
-    print("开启监控")
+        scheduler.add_job(new_clock, "interval", seconds=60)
+        scheduler.add_job(second_clock, "interval", seconds=60)
+        scheduler.start()
+        print("开启监控")
 
     sys.stdout.flush()
     print("开始bot")
@@ -150,149 +164,149 @@ def start_bot():
     start_message_handler = MessageHandler(
         status,
 
-        filters=filters.command(["start"]) & filters.user(int(Telegram_user_id))
+        filters=filters.command(["start"]) & filters.create(chexk_group) & filters.private
     )
 
     help_message_handler = MessageHandler(
         help,
-        # filters=filters.command("start") & filters.user(int(Telegram_user_id))
-        filters=filters.command(["help"]) & filters.user(int(Telegram_user_id))
+        # filters=filters.command("start") & filters.create(chexk_group)
+        filters=filters.command(["help"]) & filters.create(chexk_group) & filters.private
     )
 
 
     pixivid_message_handler = MessageHandler(
         start_download_id,
-        filters=filters.command("pixivpid") & filters.user(int(Telegram_user_id))
+        filters=filters.command("pixivpid") & filters.create(chexk_group) & filters.private
     )
 
     magfile_message_handler = MessageHandler(
         send_telegram_file,
-        filters=filters.command("magfile") & filters.user(int(Telegram_user_id))
+        filters=filters.command("magfile") & filters.create(chexk_group) & filters.private
     )
 
     http_download_message_handler = MessageHandler(
         start_http_download,
-        filters=filters.command("mirror") & filters.user(int(Telegram_user_id))
+        filters=filters.command("mirror") & filters.create(chexk_group) & filters.private
     )
     magnet_download_message_handler = MessageHandler(
         start_download,
-        filters=filters.command("magnet") & filters.user(int(Telegram_user_id))
+        filters=filters.command("magnet") & filters.create(chexk_group) & filters.private
     )
 
     telegram_file_message_handler = MessageHandler(
         get_telegram_file,
-        filters=filters.command("downtgfile") & filters.user(int(Telegram_user_id))
+        filters=filters.command("downtgfile") & filters.create(chexk_group) & filters.private
     )
     seach_main_file_message_handler = MessageHandler(
         seach_main,
-        filters=filters.command("picacgsearch") & filters.user(int(Telegram_user_id))
+        filters=filters.command("picacgsearch") & filters.create(chexk_group) & filters.private
     )
 
 
 
     start_http_downloadtg_message_handler = MessageHandler(
         start_http_downloadtg,
-        filters=filters.command("mirrortg") & filters.user(int(Telegram_user_id))
+        filters=filters.command("mirrortg") & filters.create(chexk_group) & filters.private
     )
     start_rclonecopy_message_handler = MessageHandler(
         start_rclonecopy,
-        filters=filters.command("rclonecopy") & filters.user(int(Telegram_user_id))
+        filters=filters.command("rclonecopy") & filters.create(chexk_group) & filters.private
     )
 
     start_rclonelsd_message_handler = MessageHandler(
         start_rclonelsd,
-        filters=filters.command("rclonelsd") & filters.user(int(Telegram_user_id))
+        filters=filters.command("rclonelsd") & filters.create(chexk_group) & filters.private
     )
 
     start_rclone_message_handler = MessageHandler(
         start_rclonels,
-        filters=filters.command("rclone") & filters.user(int(Telegram_user_id))
+        filters=filters.command("rclone") & filters.create(chexk_group) & filters.private
     )
 
     start_rclonecopyurl_message_handler = MessageHandler(
         start_rclonecopyurl,
-        filters=filters.command("rclonecopyurl") & filters.user(int(Telegram_user_id))
+        filters=filters.command("rclonecopyurl") & filters.create(chexk_group) & filters.private
     )
 
     get_file_id_message_handler = MessageHandler(
         get_file_id,
-        filters=filters.command("getfileid") & filters.user(int(Telegram_user_id))
+        filters=filters.command("getfileid") & filters.create(chexk_group) & filters.private
     )
     sendfile_by_id_message_handler = MessageHandler(
         sendfile_by_id,
-        filters=filters.command("getfile") & filters.user(int(Telegram_user_id))
+        filters=filters.command("getfile") & filters.create(chexk_group) & filters.private
     )
 
 
 
     start_get_video_info_message_handler = MessageHandler(
         start_get_video_info,
-        filters=filters.command("video") & filters.user(int(Telegram_user_id))
+        filters=filters.command("video") & filters.create(chexk_group) & filters.private
     )
 
     start_download_od_shareurl_handler = MessageHandler(
         odshare_download,
-        filters=filters.command("odshare") & filters.user(int(Telegram_user_id))
+        filters=filters.command("odshare") & filters.create(chexk_group) & filters.private
     )
 
     start_get_authorinfo_handler = MessageHandler(
         author,
-        filters=filters.command("pixivauthor") & filters.user(int(Telegram_user_id))
+        filters=filters.command("pixivauthor") & filters.create(chexk_group) & filters.private
     )
 
     start_get_pixiv_top_handler = MessageHandler(
         pixiv_topall,
-        filters=filters.command("pixivtopall") & filters.user(int(Telegram_user_id))
+        filters=filters.command("pixivtopall") & filters.create(chexk_group) & filters.private
     )
 
     start_pixiv_topillustration_handler = MessageHandler(
         pixiv_topillustration,
-        filters=filters.command("pixivtopillust") & filters.user(int(Telegram_user_id))
+        filters=filters.command("pixivtopillust") & filters.create(chexk_group) & filters.private
 
     )
 
     get_song_info_handler = MessageHandler(
         get_song_info,
-        filters=filters.command("neteaseid") & filters.user(int(Telegram_user_id))
+        filters=filters.command("neteaseid") & filters.create(chexk_group) & filters.private
 
     )
 
     search_song_list_handler = MessageHandler(
         search_song_list,
-        filters=filters.command("searchsong") & filters.user(int(Telegram_user_id))
+        filters=filters.command("searchsong") & filters.create(chexk_group) & filters.private
 
     )
 
     get_song_list_info_handler = MessageHandler(
         get_song_list_info,
-        filters=filters.command("playlist") & filters.user(int(Telegram_user_id))
+        filters=filters.command("playlist") & filters.create(chexk_group) & filters.private
 
     )
 
     download_nhentai_id_handler = MessageHandler(
         download_nhentai_id,
-        filters=filters.command("nhentai") & filters.user(int(Telegram_user_id))
+        filters=filters.command("nhentai") & filters.create(chexk_group) & filters.private
 
     )
 
     single_download_handler = MessageHandler(
         single_download,
-        filters=filters.command("ehentai") & filters.user(int(Telegram_user_id))
+        filters=filters.command("ehentai") & filters.create(chexk_group) & filters.private
     )
 
     get_search_ehentai_info_handler = MessageHandler(
         get_search_ehentai_info,
-        filters=filters.command("ehentaisearch") & filters.user(int(Telegram_user_id))
+        filters=filters.command("ehentaisearch") & filters.create(chexk_group) & filters.private
     )
 
     get_search_nhentai_info_handler = MessageHandler(
         get_search_nhentai_info,
-        filters=filters.command("nhentaisearch") & filters.user(int(Telegram_user_id))
+        filters=filters.command("nhentaisearch") & filters.create(chexk_group) & filters.private
     )
 
     odprivate_download_handler = MessageHandler(
         odprivate_download,
-        filters=filters.command("odprivate") & filters.user(int(Telegram_user_id))
+        filters=filters.command("odprivate") & filters.create(chexk_group) & filters.private
     )
 
     book_search_all_call_handler = CallbackQueryHandler(
@@ -363,10 +377,7 @@ def start_bot():
         filters=filters.create(lambda _, __, query: "playlist" in query.data)
     )
 
-    start_send_photo_handler = MessageHandler(
-        send_photo,
-        filters=filters.photo & filters.user(int(Telegram_user_id))
-    )
+
 
     saucenao_handler = CallbackQueryHandler(
         callback=saucenao,
@@ -389,6 +400,17 @@ def start_bot():
         callback=search_all_photo,
         filters=filters.create(lambda _, __, query: "allsearchphoto" == query.data)
     )
+
+    start_send_photo_handler = MessageHandler(
+        send_photo,
+        filters=filters.photo & filters.create(chexk_group) & filters.private
+    )
+
+    start_more_magnet_handler = MessageHandler(
+        more_magnet,
+        filters=filters.text & filters.create(chexk_group) & filters.private
+    )
+
 
     client.add_handler(search_all_photo_handler, group=0)
     client.add_handler(start_download_video_handler, group=0)
@@ -443,13 +465,11 @@ def start_bot():
     client.add_handler(get_search_nhentai_info_handler, group=1)
     client.add_handler(download_nhentai_id_call_handler, group=1)
     client.add_handler(book_search_all_call_handler, group=1)
-    client.add_handler(odprivate_download_handler, group=1)
+    client.add_handler(start_more_magnet_handler, group=1)
 
 
-
-
-
-
+    if App_title == "":
+        client.add_handler(odprivate_download_handler, group=1)
 
 
 

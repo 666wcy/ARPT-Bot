@@ -18,6 +18,23 @@ try:
 except:
     App_title=""
 
+try:
+    if os.environ.get('Rclone_share')=="True":
+        Rclone_share=True
+    else:
+        Rclone_share=False
+except:
+    Rclone_share=False
+    
+print(f"是否rclone_share:{Rclone_share}")
+
+try:
+    Error_user_info=os.environ.get('Error_user_info')
+    if Error_user_info ==None:
+        Error_user_info="未在使用白名单"
+except:
+    Error_user_info="未在使用白名单"
+
 Telegram_bot_api=os.environ.get('Telegram_bot_api')
 Telegram_user_id=os.environ.get('Telegram_user_id')
 Api_hash=os.environ.get('Api_hash')
@@ -44,7 +61,7 @@ message = str(Aria2_secret)
 message_bytes = message.encode('ascii')
 base64_bytes = base64.b64encode(message_bytes)
 base64_message = base64_bytes.decode('ascii')
-if App_title!="":
+if App_title!="" and "-" not in str(Telegram_user_id):
     ari2_ng_url=f"https://{App_title}.herokuapp.com/ng/#!/settings/rpc/set/https/{App_title}.herokuapp.com/443/jsonrpc/{base64_message}"
 
     client.send_message(chat_id=int(Telegram_user_id), text=f"Bot上线！！！\nAria2NG快捷面板：{ari2_ng_url}")

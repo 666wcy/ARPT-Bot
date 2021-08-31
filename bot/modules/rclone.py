@@ -17,7 +17,7 @@ def hum_convert(value):
             return "%.2f%s" % (value, units[i])
         value = value / size
 
-#@bot.message_handler(commands=['rclonecopy'],func=lambda message:str(message.chat.id) == str(Telegram_user_id))
+
 def start_rclonecopy(client, message):
     try:
         firstdir = message.text.split()[1]
@@ -170,7 +170,7 @@ def run_rclonecopyurl(url,client, message):
 
     return cmd.returncode
 
-#@bot.message_handler(commands=['rclonecopyurl'],func=lambda message:str(message.chat.id) == str(Telegram_user_id))
+
 def start_rclonecopyurl(client, message):
     try:
         url = message.text.split()[1]
@@ -184,7 +184,7 @@ def start_rclonecopyurl(client, message):
         sys.stdout.flush()
 
 
-#@bot.message_handler(commands=['rclonelsd'],func=lambda message:str(message.chat.id) == str(Telegram_user_id))
+
 async def start_rclonelsd(client, message):
     try:
         firstdir = message.text.split()[1]
@@ -198,7 +198,7 @@ async def start_rclonelsd(client, message):
         print(f"rclonelsd :{e}")
         sys.stdout.flush()
 
-#@bot.message_handler(commands=['rclone'],func=lambda message:str(message.chat.id) == str(Telegram_user_id))
+
 async def start_rclonels(client, message):
     try:
         firstdir = message.text.split()[1]

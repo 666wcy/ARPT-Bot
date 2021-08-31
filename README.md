@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-07-26 15:04:54
+ * @LastEditTime: 2021-08-31 14:30:09
 -->
 
 
@@ -26,6 +26,7 @@
 - [X] Aria2
   - [X] 自动化安装Aria2，自定义密钥
   - [X] 用Bot进行简单的Aria2端控制(添加任务、暂停任务、删除任务)
+  - [X] 支持批量添加任务
   - [X] 显示下载进度
   - [X] 任务完成后通过rclone上传(**显示上传进度**)，最新版rclone已支持世纪互联
   - [X] 支持aria2面板类工具rpc连接(get、post方式)
@@ -128,8 +129,10 @@ docker run -d \
     -e Telegram_bot_api=xxx \
     -e Telegram_user_id=xxx \
     -e Upload=xxx \
+    -e Rclone_share=False \
+    -e Error_user_info="你没有使用权限" \
     -p 8868:8868 \
-   benchao/arpt:v2.0.6
+   benchao/arpt:v2.0.7
 
 ```
 
@@ -142,11 +145,16 @@ Aria2_secret    Aria2的密匙
 
 Telegram_bot_api    Bot的API，在@BotFather申请获得
 
-Telegram_user_id    使用者的TG id，可在@userinfobot处获得
+Telegram_user_id    使用者的TG id，可在@userinfobot处获得，设置为群组ID则该群组所有人员可用，需要设置Bot的群组权限
 
 Remote  上传目的地的rclone盘符
 
 Upload  上传文件夹名称，后面不需要加/
+
+Rclone_share 可不填，True 为上传网盘后返回分享链接(onedrive)，False 为关闭该功能，不设置该变量则默认关闭
+
+Error_user_info 可不填，可设置非允许使用者发送消息时的提示，不设置该变量则使用默认语句
+
 ```
 
 在Docker运行后访问ip:port访问文件管理器，~~在/.config/rclone下文件夹新建rclone.conf,粘贴自己的rclone配置。~~
@@ -187,6 +195,18 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 ![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.771n1tka9dg0.png)
 
 # 更新说明
+
+v2.0.7
+
+修复Bot添加的任务重复调用上传
+
+新增群组功能，支持设置整个群组的人员拥有使用权限，支持自定义设定拒绝词
+
+新增上传完成后返回分享链接(仅支持OD)，权限为：同域、只读
+
+修复Nhentai下载本子失败以及下载完成后本子文件未删除问题
+
+新增发送磁力链接直接链添加任务，默认上传网盘，支持批量磁力
 
 v2.0.6
 
