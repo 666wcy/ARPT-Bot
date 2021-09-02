@@ -505,7 +505,7 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
             try:
                 if Rclone_share == False:
                     await client.send_message(text=f"{title}\n上传结束", chat_id=info.chat.id)
-                    break
+                    return
                 else:
                     if int(file_num) == 1:
                         file_name = os.path.basename(dir)
@@ -518,15 +518,15 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
                     await client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
                     os.remove(f"{name}.log")
                     task.remove(gid)
-                    break
+                    return
             except Exception as e:
                 print(e)
                 try:
                     os.remove(f"{name}.log")
                     task.remove(gid)
-                    break
+                    return
                 except:
-                    break
+                    return
 
     return
 
@@ -821,6 +821,7 @@ def run_rclone(dir,title,info,file_num,client, message,gid):
             try:
                 if Rclone_share==False:
                     client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
+                    return
                 else:
                     if int(file_num) == 1:
                         file_name = os.path.basename(dir)
@@ -1200,13 +1201,13 @@ async def more_magnet(client, message):
         text=message.text
         if "magnet" in text:
             if "\n" in text:
-                
+
                 magnet_list=str(text).split("\n")
                 for magnet in magnet_list:
                     t1 = threading.Thread(target=the_download, args=(client, message, magnet))
                     t1.start()
-                         
-            else:      
+
+            else:
                 t1 = threading.Thread(target=the_download, args=(client, message,text))
                 t1.start()
     except Exception as e :
