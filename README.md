@@ -1,8 +1,122 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-09-06 17:57:01
+ * @LastEditTime: 2021-09-06 18:22:30
 -->
+
+[![GitHub Stars](https://img.shields.io/github/stars/666wcy/ARPT-Bot.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/linuxserver/docker-qbittorrent) [![Docker Pulls](https://img.shields.io/docker/pulls/benchao/arpt.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=pulls&logo=docker)](https://hub.docker.com/repository/docker/benchao/arpt) [![GitHub Release](https://img.shields.io/docker/v/benchao/arpt?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=最新版本&logo=docker)](https://github.com/linuxserver/docker-qbittorrent/releases)
+
+# 更新说明
+
+v2.0.8
+
+修复rclone剩余时间显示问题
+
+新增支持多文件同时发送上传TG
+
+新增支持多种子文件同时发送
+
+同步原作者[更新](https://github.com/gaowanliang/OneDriveShareLinkPushAria2/commit/a8dd447040ccd0aca89a3e2680a871200ca8c446)，修复od分享链接文件数直到30的问题，感谢原作者
+
+<details>
+<summary>历史记录</summary>
+
+
+v2.0.7
+
+修复Bot添加的任务重复调用上传
+
+新增群组功能，支持设置整个群组的人员拥有使用权限，支持自定义设定拒绝词
+
+新增上传完成后返回分享链接(仅支持OD)，权限为：同域、只读
+
+修复Nhentai下载本子失败以及下载完成后本子文件未删除问题
+
+新增发送磁力链接直接链添加任务，默认上传网盘，支持批量磁力
+
+v2.0.6
+
+新增带有密码的公开分享链接的od、sp分享链接下载
+
+新增需要登录账号的分享链接下载，需要同域账号的账号和密码
+
+优化上述推送完成的显示
+
+
+v2.0.5
+
+新增本子的搜索，此版本支持哔咔、ehentai、nhentai
+
+nhentai支持直接识别链接下载
+
+
+
+v2.0.4
+
+合并[搜图机器人](https://github.com/666wcy/search_photo-telegram-bot-heroku)，支持[saucenao](https://saucenao.com/)、[WhatAnime](https://trace.moe/)、[ascii2d](https://ascii2d.net/)、[iqdb](http://www.iqdb.org/)
+
+搜索下载哔咔的本子，支持ZIP文件格式发送到TG和上传网盘
+
+对接 [nhentai](https://github.com/RicterZ/nhentai),下载nhentai本子并支持以ZIP文件格式发送TG、ZIP格式上传网盘、网页格式发送到TG
+
+
+v2.0.3
+
+对接[OneDriveShareLinkPushAria2](https://github.com/gaowanliang/OneDriveShareLinkPushAria2)的更新，支持sharepoint分享链接。
+
+修复网易云歌单显示不全的问题。
+
+v2.0.1
+
+修复docker构建时rclone安装失败，修复网易云歌单下载到无版权音乐时整个歌单下载停止
+
+v2.0.0
+
+Bot开源，支持arm64，目前没有机子测试，理论可行
+
+v1.1.7
+
+修复pixiv发送到tg时因为尺寸不符合tg api要求报错，取消发送不符合尺寸的图片。
+
+尝试修复下载卡99%的概率性问题，效果未知。
+
+新增网易云音乐的下载，目前支持搜索下载，id下载，整个歌单下载，支持发送到tg和上传到网盘。API接口项目：[NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi),目前使用的是本人的API，有黑胶会员，后续会支持自定义API地址。
+
+QQ音乐如果有稳定接口项目，也可推荐对接Bot
+
+![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/xxx.6kk2hr659yw0.png)
+
+![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.l6bobb2z9vk.png)
+
+![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.7b3nuhohe4o0.png)
+
+v1.1.6
+
+将pixivtop命令更改为pixivtopall,优化按键选择方式，新增插画榜和男性榜、女性榜、新人榜、原创榜，支持指定日期榜单下载
+
+![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.1q6zlq2sggow.png)
+
+v1.1.5
+
+取消pixivuser、pixivusertg、pixivuserphoto、pixivusertele
+
+优化为单个命令pixivauthor
+
+![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.7huyt6u0ne40.png)
+
+新增pixiv排行榜的下载(日榜、月榜、周榜),后续将增加插画榜和男性榜、女性榜等
+
+![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.1iniuqwtbojk.png)
+
+v1.1.4
+
+新增下载OneDrive 公开分享链接中的文件，保持文件路径推送到Aria2.已实现。采用项目地址：[OneDriveShareLinkPushAria2](https://github.com/gaowanliang/OneDriveShareLinkPushAria2)
+
+修复**downtgfile**命令下载视频失败的错误
+
+优化/rclone命令的显示
+
+</details>
 
 
 # 介绍
@@ -175,10 +289,7 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 则端口为8868
 面板密钥填docker创建时你的Aria2_secret值
 
-# bug说明
-1.下载文件时概率性出现99%，实际已完成上传，尚未解决
 
-~~2.pixiv发送图片给我时概率性出现[400 PHOTO_INVALID_DIMENSIONS]: The photo dimensions are invalid (caused by "messages.UploadMedia")的错误，尚未找到原因~~1.1.7版本以后已修复，不符合尺寸的图片不进行发送(暴力解决)
 
 # 效果展示
 
@@ -194,112 +305,6 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 
 ![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.771n1tka9dg0.png)
 
-# 更新说明
-
-v2.0.8
-
-修复rclone剩余时间显示问题
-
-新增支持多文件同时发送上传TG
-
-新增支持多种子文件同时发送
-
-同步原作者[更新](https://github.com/gaowanliang/OneDriveShareLinkPushAria2/commit/a8dd447040ccd0aca89a3e2680a871200ca8c446)，修复od分享链接文件数直到30的问题，感谢原作者
-
-
-v2.0.7
-
-修复Bot添加的任务重复调用上传
-
-新增群组功能，支持设置整个群组的人员拥有使用权限，支持自定义设定拒绝词
-
-新增上传完成后返回分享链接(仅支持OD)，权限为：同域、只读
-
-修复Nhentai下载本子失败以及下载完成后本子文件未删除问题
-
-新增发送磁力链接直接链添加任务，默认上传网盘，支持批量磁力
-
-v2.0.6
-
-新增带有密码的公开分享链接的od、sp分享链接下载
-
-新增需要登录账号的分享链接下载，需要同域账号的账号和密码
-
-优化上述推送完成的显示
-
-
-v2.0.5
-
-新增本子的搜索，此版本支持哔咔、ehentai、nhentai
-
-nhentai支持直接识别链接下载
-
-
-
-v2.0.4
-
-合并[搜图机器人](https://github.com/666wcy/search_photo-telegram-bot-heroku)，支持[saucenao](https://saucenao.com/)、[WhatAnime](https://trace.moe/)、[ascii2d](https://ascii2d.net/)、[iqdb](http://www.iqdb.org/)
-
-搜索下载哔咔的本子，支持ZIP文件格式发送到TG和上传网盘
-
-对接 [nhentai](https://github.com/RicterZ/nhentai),下载nhentai本子并支持以ZIP文件格式发送TG、ZIP格式上传网盘、网页格式发送到TG
-
-
-v2.0.3
-
-对接[OneDriveShareLinkPushAria2](https://github.com/gaowanliang/OneDriveShareLinkPushAria2)的更新，支持sharepoint分享链接。
-
-修复网易云歌单显示不全的问题。
-
-v2.0.1
-
-修复docker构建时rclone安装失败，修复网易云歌单下载到无版权音乐时整个歌单下载停止
-
-v2.0.0
-
-Bot开源，支持arm64，目前没有机子测试，理论可行
-
-v1.1.7
-
-修复pixiv发送到tg时因为尺寸不符合tg api要求报错，取消发送不符合尺寸的图片。
-
-尝试修复下载卡99%的概率性问题，效果未知。
-
-新增网易云音乐的下载，目前支持搜索下载，id下载，整个歌单下载，支持发送到tg和上传到网盘。API接口项目：[NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi),目前使用的是本人的API，有黑胶会员，后续会支持自定义API地址。
-
-QQ音乐如果有稳定接口项目，也可推荐对接Bot
-
-![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/xxx.6kk2hr659yw0.png)
-
-![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.l6bobb2z9vk.png)
-
-![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.7b3nuhohe4o0.png)
-
-v1.1.6
-
-将pixivtop命令更改为pixivtopall,优化按键选择方式，新增插画榜和男性榜、女性榜、新人榜、原创榜，支持指定日期榜单下载
-
-![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.1q6zlq2sggow.png)
-
-v1.1.5
-
-取消pixivuser、pixivusertg、pixivuserphoto、pixivusertele
-
-优化为单个命令pixivauthor
-
-![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.7huyt6u0ne40.png)
-
-新增pixiv排行榜的下载(日榜、月榜、周榜),后续将增加插画榜和男性榜、女性榜等
-
-![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.1iniuqwtbojk.png)
-
-v1.1.4
-
-新增下载OneDrive 公开分享链接中的文件，保持文件路径推送到Aria2.已实现。采用项目地址：[OneDriveShareLinkPushAria2](https://github.com/gaowanliang/OneDriveShareLinkPushAria2)
-
-修复**downtgfile**命令下载视频失败的错误
-
-优化/rclone命令的显示
 
 # 感谢下面大佬的贡献
 
