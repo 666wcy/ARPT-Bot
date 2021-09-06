@@ -16,7 +16,7 @@ from urllib import parse
 import json
 import requests
 from pyppeteer import launch
-
+import copy
 import nest_asyncio
 
 nest_asyncio.apply()
@@ -102,9 +102,7 @@ async def downloadFiles(client,info,password,originalPath, req, layers, start=1,
         print("\t" * layers, "这个文件夹没有文件")
         return 0
 
-    pat = re.search(
-        'g_listData = {"wpq":"","Templates":{},"ListData":{ "Row" : ([\s\S]*?),"FirstRow"', reqf.text)
-    jsonData = json.loads(pat.group(1))
+    filesData = []
     redirectURL = reqf.url
     redirectSplitURL = redirectURL.split("/")
     query = dict(urllib.parse.parse_qsl(
@@ -132,10 +130,78 @@ async def downloadFiles(client,info,password,originalPath, req, layers, start=1,
     for key, value in header.items():
         # print(key+':'+str(value))
         headerStr += key + ':' + str(value) + "\n"
+    relativeFolder = ""
+    rootFolder = query["id"]
+    for i in rootFolder.split("/"):
+        if i != "Documents":
+            relativeFolder += i + "/"
+        else:
+            relativeFolder += i
+            break
+    relativeUrl = parse.quote(relativeFolder).replace(
+        "/", "%2F").replace("_", "%5F").replace("-", "%2D")
+    rootFolderUrl = parse.quote(rootFolder).replace(
+        "/", "%2F").replace("_", "%5F").replace("-", "%2D")
+
+    graphqlVar = '{"query":"query (\n        $listServerRelativeUrl: String!,$renderListDataAsStreamParameters: RenderListDataAsStreamParameters!,$renderListDataAsStreamQueryString: String!\n        )\n      {\n      \n      legacy {\n      \n      renderListDataAsStream(\n      listServerRelativeUrl: $listServerRelativeUrl,\n      parameters: $renderListDataAsStreamParameters,\n      queryString: $renderListDataAsStreamQueryString\n      )\n    }\n      \n      \n  perf {\n    executionTime\n    overheadTime\n    parsingTime\n    queryCount\n    validationTime\n    resolvers {\n      name\n      queryCount\n      resolveTime\n      waitTime\n    }\n  }\n    }","variables":{"listServerRelativeUrl":"%s","renderListDataAsStreamParameters":{"renderOptions":5707527,"allowMultipleValueFilterForTaxonomyFields":true,"addRequiredFields":true,"folderServerRelativeUrl":"%s"},"renderListDataAsStreamQueryString":"@a1=\'%s\'&RootFolder=%s&TryNewExperienceSingle=TRUE"}}' % (relativeFolder, rootFolder, relativeUrl, rootFolderUrl)
+
+
+    # print(graphqlVar)
+    s2 = urllib.parse.urlparse(redirectURL)
+    tempHeader = copy.deepcopy(header)
+    tempHeader["referer"] = redirectURL
+    tempHeader["cookie"] = reqf.headers["set-cookie"]
+    tempHeader["authority"] = s2.netloc
+    tempHeader["content-type"] = "application/json;odata=verbose"
+    # print(redirectSplitURL)
+
+    graphqlReq = req.post(
+        "/".join(redirectSplitURL[:-3]) + "/_api/v2.1/graphql", data=graphqlVar.encode('utf-8'), headers=tempHeader)
+    graphqlReq = json.loads(graphqlReq.text)
+    # print(graphqlReq)
+    if "NextHref" in graphqlReq["data"]["legacy"]["renderListDataAsStream"]["ListData"]:
+        nextHref = graphqlReq[
+                       "data"]["legacy"]["renderListDataAsStream"]["ListData"][
+                       "NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
+                           "%27" + relativeUrl + "%27")
+        filesData.extend(graphqlReq[
+                             "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
+        # print(filesData)
+
+        listViewXml = graphqlReq[
+            "data"]["legacy"]["renderListDataAsStream"]["ViewMetadata"]["ListViewXml"]
+        renderListDataAsStreamVar = '{"parameters":{"__metadata":{"type":"SP.RenderListDataParameters"},"RenderOptions":1216519,"ViewXml":"%s","AllowMultipleValueFilterForTaxonomyFields":true,"AddRequiredFields":true}}' % (
+            listViewXml).replace('"', '\\"')
+        # print(renderListDataAsStreamVar, nextHref,1)
+
+        # print(listViewXml)
+
+        graphqlReq = req.post(
+            "/".join(
+                redirectSplitURL[:-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
+            data=renderListDataAsStreamVar.encode('utf-8'), headers=tempHeader)
+        graphqlReq = json.loads(graphqlReq.text)
+        # print(graphqlReq)
+
+        while "NextHref" in graphqlReq["ListData"]:
+            nextHref = graphqlReq["ListData"]["NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
+                    "%27" + relativeUrl + "%27")
+            filesData.extend(graphqlReq["ListData"]["Row"])
+            graphqlReq = req.post(
+                "/".join(redirectSplitURL[
+                         :-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
+                data=renderListDataAsStreamVar.encode('utf-8'), headers=tempHeader)
+            # print(graphqlReq.text)
+            graphqlReq = json.loads(graphqlReq.text)
+            # print(graphqlReq)
+        filesData.extend(graphqlReq["ListData"]["Row"])
+    else:
+        filesData = filesData.extend(graphqlReq[
+                                         "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
 
     fileCount = 0
     # print(headerStr)
-    for i in jsonData:
+    for i in filesData:
         if i['FSObjType'] == "1":
             print("\t" * layers, "文件夹：",
                   i['FileLeafRef'], "\t独特ID：", i["UniqueId"], "正在进入")
@@ -293,10 +359,8 @@ async def odpriva_downloadFiles(client,info,admin,password,originalPath, req, la
     if ',"FirstRow"' not in reqf.text:
         print("\t" * layers, "这个文件夹没有文件")
         return 0
+    filesData = []
 
-    pat = re.search(
-        'g_listData = {"wpq":"","Templates":{},"ListData":{ "Row" : ([\s\S]*?),"FirstRow"', reqf.text)
-    jsonData = json.loads(pat.group(1))
     redirectURL = reqf.url
     redirectSplitURL = redirectURL.split("/")
     query = dict(urllib.parse.parse_qsl(
@@ -327,7 +391,77 @@ async def odpriva_downloadFiles(client,info,admin,password,originalPath, req, la
 
     fileCount = 0
     # print(headerStr)
-    for i in jsonData:
+
+    relativeFolder = ""
+    rootFolder = query["id"]
+    for i in rootFolder.split("/"):
+        if i != "Documents":
+            relativeFolder += i + "/"
+        else:
+            relativeFolder += i
+            break
+    relativeUrl = parse.quote(relativeFolder).replace(
+        "/", "%2F").replace("_", "%5F").replace("-", "%2D")
+    rootFolderUrl = parse.quote(rootFolder).replace(
+        "/", "%2F").replace("_", "%5F").replace("-", "%2D")
+
+    graphqlVar = '{"query":"query (\n        $listServerRelativeUrl: String!,$renderListDataAsStreamParameters: RenderListDataAsStreamParameters!,$renderListDataAsStreamQueryString: String!\n        )\n      {\n      \n      legacy {\n      \n      renderListDataAsStream(\n      listServerRelativeUrl: $listServerRelativeUrl,\n      parameters: $renderListDataAsStreamParameters,\n      queryString: $renderListDataAsStreamQueryString\n      )\n    }\n      \n      \n  perf {\n    executionTime\n    overheadTime\n    parsingTime\n    queryCount\n    validationTime\n    resolvers {\n      name\n      queryCount\n      resolveTime\n      waitTime\n    }\n  }\n    }","variables":{"listServerRelativeUrl":"%s","renderListDataAsStreamParameters":{"renderOptions":5707527,"allowMultipleValueFilterForTaxonomyFields":true,"addRequiredFields":true,"folderServerRelativeUrl":"%s"},"renderListDataAsStreamQueryString":"@a1=\'%s\'&RootFolder=%s&TryNewExperienceSingle=TRUE"}}' % (relativeFolder, rootFolder, relativeUrl, rootFolderUrl)
+
+
+    # print(graphqlVar)
+    s2 = urllib.parse.urlparse(redirectURL)
+    tempHeader = copy.deepcopy(header)
+    tempHeader["referer"] = redirectURL
+    tempHeader["cookie"] = reqf.headers["set-cookie"]
+    tempHeader["authority"] = s2.netloc
+    tempHeader["content-type"] = "application/json;odata=verbose"
+    # print(redirectSplitURL)
+
+    graphqlReq = req.post(
+        "/".join(redirectSplitURL[:-3]) + "/_api/v2.1/graphql", data=graphqlVar.encode('utf-8'), headers=tempHeader)
+    graphqlReq = json.loads(graphqlReq.text)
+    # print(graphqlReq)
+    if "NextHref" in graphqlReq["data"]["legacy"]["renderListDataAsStream"]["ListData"]:
+        nextHref = graphqlReq[
+                       "data"]["legacy"]["renderListDataAsStream"]["ListData"][
+                       "NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
+                           "%27" + relativeUrl + "%27")
+        filesData.extend(graphqlReq[
+                             "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
+        # print(filesData)
+
+        listViewXml = graphqlReq[
+            "data"]["legacy"]["renderListDataAsStream"]["ViewMetadata"]["ListViewXml"]
+        renderListDataAsStreamVar = '{"parameters":{"__metadata":{"type":"SP.RenderListDataParameters"},"RenderOptions":1216519,"ViewXml":"%s","AllowMultipleValueFilterForTaxonomyFields":true,"AddRequiredFields":true}}' % (
+            listViewXml).replace('"', '\\"')
+        # print(renderListDataAsStreamVar, nextHref,1)
+
+        # print(listViewXml)
+
+        graphqlReq = req.post(
+            "/".join(
+                redirectSplitURL[:-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
+            data=renderListDataAsStreamVar.encode('utf-8'), headers=tempHeader)
+        graphqlReq = json.loads(graphqlReq.text)
+        # print(graphqlReq)
+
+        while "NextHref" in graphqlReq["ListData"]:
+            nextHref = graphqlReq["ListData"]["NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
+                    "%27" + relativeUrl + "%27")
+            filesData.extend(graphqlReq["ListData"]["Row"])
+            graphqlReq = req.post(
+                "/".join(redirectSplitURL[
+                         :-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
+                data=renderListDataAsStreamVar.encode('utf-8'), headers=tempHeader)
+            # print(graphqlReq.text)
+            graphqlReq = json.loads(graphqlReq.text)
+            # print(graphqlReq)
+        filesData.extend(graphqlReq["ListData"]["Row"])
+    else:
+        filesData = filesData.extend(graphqlReq[
+                                         "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
+
+    for i in filesData:
         if i['FSObjType'] == "1":
             print("\t" * layers, "文件夹：",
                   i['FileLeafRef'], "\t独特ID：", i["UniqueId"], "正在进入")
@@ -473,8 +607,7 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
                 if temp_text != last_line and "ETA" in last_line:
                     print(f"上传中\n{last_line} end")
                     sys.stdout.flush()
-                    log_time, file_part, upload_Progress, upload_speed, part_time = re.findall("(.*?)INFO.*?(\d.*?),.*?(\d+%),.*?(\d.*?),.*?ETA(.*)", last_line, re.S)[0]
-
+                    log_time,file_part,upload_Progress,upload_speed,part_time=re.findall("(.*?)INFO.*?(\d.*?),.*?(\d+%),.*?(\d.*?s).*?ETA(.*?s|m|h)",last_line , re.S)[0]
                     text=f"{title}\n" \
                          f"更新时间：`{log_time}`\n" \
                          f"上传部分：`{file_part}`\n" \
@@ -797,7 +930,7 @@ def run_rclone(dir,title,info,file_num,client, message,gid):
 
                 print (f"上传中\n{last_line}")
                 if temp_text != last_line and "ETA" in last_line:
-                    log_time,file_part,upload_Progress,upload_speed,part_time=re.findall("(.*?)INFO.*?(\d.*?),.*?(\d+%),.*?(\d.*?s).*?ETA.*?(\d.*?)",last_line , re.S)[0]
+                    log_time,file_part,upload_Progress,upload_speed,part_time=re.findall("(.*?)INFO.*?(\d.*?),.*?(\d+%),.*?(\d.*?s).*?ETA(.*?s|m|h)",last_line , re.S)[0]
                     text=f"{title}\n" \
                          f"更新时间：`{log_time}`\n" \
                          f"上传部分：`{file_part}`\n" \
@@ -1215,42 +1348,85 @@ async def more_magnet(client, message):
         await client.send_message(chat_id=message.chat.id, text=f"more_magnet error :{e}")
 
 
-async def temp_telegram_file(client, message):
-    answer = await client.ask(chat_id=message.chat.id, text='请发送种子文件,或输入 /cancel 取消')
-    print(answer)
-    print(answer.text)
-    if answer.document == None:
-        await client.send_message(text="发送的不是文件", chat_id=message.chat.id, parse_mode='markdown')
-        return "False"
-    elif answer.text == "/cancel":
-        await client.send_message(text="取消发送", chat_id=message.chat.id, parse_mode='markdown')
-        return "False"
-    else:
-        try:
+async def temp_telegram_file(client, message,file_list):
+    try:
+        if len(file_list) == 0:
+            answer = await client.ask(chat_id=message.chat.id, text='请发送TG文件,或输入 /cancel 取消')
+        else:
+            answer = await client.ask(chat_id=message.chat.id,
+                                      text=f'已接收{len(file_list)}个文件，请继续发送TG文件，输入 /finish 取消,或输入 /cancel 取消')
+        info = answer
+        if info.media_group_id != None:
+            media = await client.get_media_group(chat_id=info.chat.id, message_id=info.message_id)
+            print(media)
+            for a in media:
+                if a.document == None and a.video == None:
+                    await client.send_message(text="发送的不是文件", chat_id=message.chat.id, parse_mode='markdown')
+                    await temp_telegram_file(client, message,file_list)
+                    return file_list
+                else:
+                    file_list.append(a)
+            await temp_telegram_file(client, message,file_list)
+            return file_list
 
-            file_dir = await client.download_media(message=answer)
-            print(file_dir)
-            sys.stdout.flush()
-            return file_dir
-        except Exception as e:
-            print(f"{e}")
-            sys.stdout.flush()
-            await client.send_message(text="下载文件失败", chat_id=message.chat.id, parse_mode='markdown')
-            return "False"
+        elif info.text == "/cancel":
+            await client.send_message(text="取消发送", chat_id=message.chat.id, parse_mode='markdown')
+            return []
+        elif info.text == "/finish":
+            await client.send_message(text=f"接收文件完成,共有{len(file_list)}个文件", chat_id=message.chat.id, parse_mode='markdown')
+            return file_list
+        elif info.document == None and info.video == None:
+            await client.send_message(text="发送的不是文件", chat_id=message.chat.id, parse_mode='markdown')
+            await temp_telegram_file(client, message,file_list)
+            return file_list
 
-#commands=['magfile']
-def send_telegram_file(client, message):
-    loop = asyncio.get_event_loop()
-    temp = loop.run_until_complete(temp_telegram_file(client, message))
-    print(temp)
-    sys.stdout.flush()
-    if temp =="False":
-        return
-    else:
-        file_dir=temp
-        t1 = threading.Thread(target=file_download, args=(client, message, file_dir))
-        t1.start()
-        return
+        else:
+            try:
+                file_list.append(info)
+                temp_file= await temp_telegram_file(client, message,file_list)
+                file_list=temp_file
+                return file_list
+
+            except Exception as e:
+                print(f"标记1 {e}")
+                sys.stdout.flush()
+                await client.send_message(text="下载文件失败", chat_id=message.chat.id, parse_mode='markdown')
+                return file_list
+    except Exception as e:
+        print(f"下载文件失败 {e}")
+        sys.stdout.flush()
+
+
+
+
+
+async def send_telegram_file(client, message):
+    try:
+
+        temp = await temp_telegram_file(client,message,[])
+
+        sys.stdout.flush()
+
+        if len(temp)==0:
+            return
+        elif len(temp)==1:
+            file_dir = await client.download_media(message=temp[0])
+
+            t1 = threading.Thread(target=file_download, args=(client, message, file_dir))
+            t1.start()
+            return
+
+        else:
+            for a in temp:
+                file_dir = await client.download_media(message=a)
+                t1 = threading.Thread(target=file_download, args=(client, message, file_dir))
+                t1.start()
+            return
+    except Exception as e:
+        print(f"start_down_telegram_file {e}")
+        await client.send_message(text=f"下载文件失败:{e}", chat_id=message.chat.id, parse_mode='markdown')
+
+        sys.stdout.flush()
 
 
 

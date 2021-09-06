@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-08-31 14:30:09
+ * @LastEditTime: 2021-09-06 17:57:01
 -->
 
 
@@ -64,8 +64,8 @@
   - [X] 发送文件获取file id
   - [X] 发送TG文件上传到网盘
   - [X] 支持命令查看Bot运行时间和剩余空间
+  - [X] 支持群组内使用。Ps:已有群组版本，正在考虑如何混合适配
   - [ ] 添加Bot白名单
-  - [ ] 支持群组内使用。Ps:已有群组版本，正在考虑如何混合适配
 
 - [X] 图片相关
   - [X] 合并[搜图机器人](https://github.com/666wcy/search_photo-telegram-bot-heroku)，支持[saucenao](https://saucenao.com/)、[WhatAnime](https://trace.moe/)、[ascii2d](https://ascii2d.net/)、[iqdb](http://www.iqdb.org/)
@@ -132,7 +132,7 @@ docker run -d \
     -e Rclone_share=False \
     -e Error_user_info="你没有使用权限" \
     -p 8868:8868 \
-   benchao/arpt:v2.0.7
+   benchao/arpt:v2.0.8
 
 ```
 
@@ -195,6 +195,17 @@ Docker目前不支持自动更新，目前更新需要自行重装新镜像版�
 ![](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.771n1tka9dg0.png)
 
 # 更新说明
+
+v2.0.8
+
+修复rclone剩余时间显示问题
+
+新增支持多文件同时发送上传TG
+
+新增支持多种子文件同时发送
+
+同步原作者[更新](https://github.com/gaowanliang/OneDriveShareLinkPushAria2/commit/a8dd447040ccd0aca89a3e2680a871200ca8c446)，修复od分享链接文件数直到30的问题，感谢原作者
+
 
 v2.0.7
 
@@ -308,7 +319,7 @@ v1.1.4
 
 [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=filebrowser&repo=filebrowser)](https://github.com/filebrowser/filebrowser)
 
-[![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=gaowanliang&repo=OneDriveShareLinkPushAria2)](https://github.com/gaowanliang/OneDriveShareLinkPushAria)
+[![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=gaowanliang&repo=OneDriveShareLinkPushAria2)](https://github.com/gaowanliang/OneDriveShareLinkPushAria2)
 
 
 
