@@ -201,6 +201,10 @@ async def downloadFiles(client,info,password,originalPath, req, layers, start=1,
 
     fileCount = 0
     # print(headerStr)
+    if filesData==None:
+        pat = re.search(
+            'g_listData = {"wpq":"","Templates":{},"ListData":{ "Row" : ([\s\S]*?),"FirstRow"', reqf.text)
+        filesData = json.loads(pat.group(1))
     for i in filesData:
         if i['FSObjType'] == "1":
             print("\t" * layers, "文件夹：",
@@ -460,7 +464,11 @@ async def odpriva_downloadFiles(client,info,admin,password,originalPath, req, la
     else:
         filesData = filesData.extend(graphqlReq[
                                          "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
-
+    
+    if filesData==None:
+        pat = re.search(
+            'g_listData = {"wpq":"","Templates":{},"ListData":{ "Row" : ([\s\S]*?),"FirstRow"', reqf.text)
+        filesData = json.loads(pat.group(1))
     for i in filesData:
         if i['FSObjType'] == "1":
             print("\t" * layers, "文件夹：",
