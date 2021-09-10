@@ -95,7 +95,8 @@ id可以换为链接，Bot会自动识别
 /nhentaisearch 搜索词 - 在nhentai中搜索本子，支持ZIP上传到网盘和发送到TG
 
 ********** 其它相关 **********
-/downtgfile - 发送TG文件并上传至网盘
+/
+ - 发送TG文件并上传至网盘
 发送 /downtgfile 后按提示发送文件即可
 
 
@@ -410,7 +411,10 @@ def start_bot():
         more_magnet,
         filters=filters.text & filters.create(chexk_group) & filters.private
     )
-
+    print(f"检查odprivate_download_handler -{App_title}-")
+    if App_title == "":
+        print("添加odprivate_download_handler")
+        client.add_handler(odprivate_download_handler, group=1)
 
     client.add_handler(search_all_photo_handler, group=0)
     client.add_handler(start_download_video_handler, group=0)
@@ -468,8 +472,6 @@ def start_bot():
     client.add_handler(start_more_magnet_handler, group=1)
 
 
-    if App_title == "":
-        client.add_handler(odprivate_download_handler, group=1)
 
 
 

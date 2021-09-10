@@ -1,12 +1,25 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-09-06 18:22:30
+ * @LastEditTime: 2021-09-10 17:22:29
 -->
 
 [![GitHub Stars](https://img.shields.io/github/stars/666wcy/ARPT-Bot.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/linuxserver/docker-qbittorrent) [![Docker Pulls](https://img.shields.io/docker/pulls/benchao/arpt.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=pulls&logo=docker)](https://hub.docker.com/repository/docker/benchao/arpt) [![GitHub Release](https://img.shields.io/docker/v/benchao/arpt?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=最新版本&logo=docker)](https://github.com/linuxserver/docker-qbittorrent/releases)
 
 # 更新说明
+
+v2.0.9
+
+此版本后支持自动更新，Python文件的变动只需重启即可更新，其它硬性更新才会通过docker更新版本
+
+修复aria2面板添加的任务与conf文件的配置冲突导致本地文件被删除 [#18](https://github.com/666wcy/ARPT-Bot/issues/18)[#16](https://github.com/666wcy/ARPT-Bot/issues/16)
+
+修复odprivate命令失效(与后续指令冲突导致失效) [#17](https://github.com/666wcy/ARPT-Bot/issues/17)
+
+修复默认面板账号密码为默认，存在安全隐患，修改为账号：`admin`，密码:你设置的`Aria2_secret`的值
+
+<details>
+<summary>历史记录</summary>
 
 v2.0.8
 
@@ -18,8 +31,6 @@ v2.0.8
 
 同步原作者[更新](https://github.com/gaowanliang/OneDriveShareLinkPushAria2/commit/a8dd447040ccd0aca89a3e2680a871200ca8c446)，修复od分享链接文件数直到30的问题，感谢原作者
 
-<details>
-<summary>历史记录</summary>
 
 
 v2.0.7

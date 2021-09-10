@@ -207,8 +207,7 @@ async def downloadFiles(client,info,password,originalPath, req, layers, start=1,
         filesData = json.loads(pat.group(1))
     for i in filesData:
         if i['FSObjType'] == "1":
-            print("\t" * layers, "文件夹：",
-                  i['FileLeafRef'], "\t独特ID：", i["UniqueId"], "正在进入")
+
             _query = query.copy()
             _query['id'] = os.path.join(
                 _query['id'], i['FileLeafRef']).replace("\\", "/")
@@ -225,12 +224,11 @@ async def downloadFiles(client,info,password,originalPath, req, layers, start=1,
         else:
             fileCount += 1
             if num == -1 or start <= fileCount + _id < start + num:
-                print("\t" * layers, "文件 [%d]：%s\t独特ID：%s\t正在推送" %
-                      (fileCount + _id, i['FileLeafRef'], i["UniqueId"]))
+
                 cc = downloadURL + (i["UniqueId"][1:-1].lower())
                 download_path = f"/root/Download{str(query['id']).split('Documents', 1)[1]}"
                 dd = dict(out=i["FileLeafRef"], header=headerStr, dir=download_path)
-                print(cc, dd)
+
                 aria2Link = "http://localhost:8080/jsonrpc"
                 aria2Secret = os.environ.get('Aria2_secret')
                 jsonreq = json.dumps({'jsonrpc': '2.0', 'id': 'qwer',
@@ -246,9 +244,7 @@ async def downloadFiles(client,info,password,originalPath, req, layers, start=1,
                 except Exception as e:
                     print(f"修改信息失败:{e}")
                 time.sleep(0.5)
-            else:
-                print("\t" * layers, "文件 [%d]：%s\t独特ID：%s\t非目标文件" %
-                      (fileCount + _id, i['FileLeafRef'], i["UniqueId"]))
+
     return fileCount
 
 async def odshare_download(client, message):
@@ -269,264 +265,267 @@ async def odshare_download(client, message):
 
 
 async def login_of_share(client,info,link,admin,password):
+    try:
 
-    url = "http://portal.office.com/onedrive"
-    # browser = await launch(headless=False,options={'args': ['--no-sandbox']})
-    browser = await launch(options={'args': ['--no-sandbox']})
-    page = await browser.newPage()
-    print(admin,password)
+        url = "http://portal.office.com/onedrive"
+        # browser = await launch(headless=False,options={'args': ['--no-sandbox']})
+        browser = await launch(options={'args': ['--no-sandbox']})
+        page = await browser.newPage()
+        print(admin,password)
 
-    await page.goto(url, {'waitUntil': 'networkidle0'})
-
-
-    await page.type("input[id='i0116']", admin)
-    await client.edit_message_text(text=f"已输入账号", chat_id=info.chat.id,
-                                   message_id=info.message_id,
-                                   parse_mode='markdown')
-
-    await page.click("#idSIButton9")
-    await asyncio.sleep(3)
-
-    await page.type("input[id='i0118']", password)
-
-    print("密码输入完成，正在跳转")
+        await page.goto(url, {'waitUntil': 'networkidle0'})
 
 
-    await page.click("#idSIButton9")
-    await client.edit_message_text(text=f"密码输入完成，正在跳转", chat_id=info.chat.id,
-                                   message_id=info.message_id,
-                                   parse_mode='markdown')
-    await asyncio.sleep(3)
+        await page.type("input[id='i0116']", admin)
+        await client.edit_message_text(text=f"已输入账号", chat_id=info.chat.id,
+                                       message_id=info.message_id,
+                                       parse_mode='markdown')
 
-    # await page.click("input[value='登录']")
-    # await page.keyboard.press('Enter')
+        await page.click("#idSIButton9")
+        await asyncio.sleep(3)
 
-    await asyncio.wait([
-        page.click("#idSIButton9"),
-        page.waitForNavigation({'timeout': 50000}),
-    ])
-    await client.edit_message_text(text=f"选择保持登录状态", chat_id=info.chat.id,
-                                   message_id=info.message_id,
-                                   parse_mode='markdown')
-    await asyncio.sleep(5)
-    while not await page.querySelector('.od-ItemContent-title'):
-        pass
+        await page.type("input[id='i0118']", password)
 
-    url = await page.evaluate('window.location.href', force_expr=True)
-    print(url)
+        print("密码输入完成，正在跳转")
 
-    res = await page.goto(link, {'waitUntil': 'networkidle0'})
 
-    url = await page.evaluate('window.location.href', force_expr=True)
-    print(url)
+        await page.click("#idSIButton9")
+        await client.edit_message_text(text=f"密码输入完成，正在跳转", chat_id=info.chat.id,
+                                       message_id=info.message_id,
+                                       parse_mode='markdown')
+        await asyncio.sleep(3)
 
-    print("点击完成")
+        # await page.click("input[value='登录']")
+        # await page.keyboard.press('Enter')
 
-    print(res.request.headers)
+        await asyncio.wait([
+            page.click("#idSIButton9"),
+            page.waitForNavigation({'timeout': 50000}),
+        ])
+        await client.edit_message_text(text=f"选择保持登录状态", chat_id=info.chat.id,
+                                       message_id=info.message_id,
+                                       parse_mode='markdown')
+        await asyncio.sleep(5)
+        while not await page.querySelector('.od-ItemContent-title'):
+            pass
 
-    header = res.request.headers
+        url = await page.evaluate('window.location.href', force_expr=True)
+        print(url)
 
-    _cookie = await page.cookies()
-    pheader = ""
-    for __cookie in _cookie:
-        coo = "{}={};".format(__cookie.get("name"), __cookie.get("value"))
-        pheader += coo
+        res = await page.goto(link, {'waitUntil': 'networkidle0'})
 
-    header['cookie'] = pheader
-    reqf = requests.get(url, headers=header)
-    print(reqf)
-    if reqf.status_code!=200:
-        return header,""
-    await browser.close()
-    return header,url
+        url = await page.evaluate('window.location.href', force_expr=True)
+        print(url)
+
+        print("点击完成")
+
+        print(res.request.headers)
+
+        header = res.request.headers
+
+        _cookie = await page.cookies()
+        pheader = ""
+        for __cookie in _cookie:
+            coo = "{}={};".format(__cookie.get("name"), __cookie.get("value"))
+            pheader += coo
+
+        header['cookie'] = pheader
+        reqf = requests.get(url, headers=header)
+        print(reqf)
+        if reqf.status_code!=200:
+            return header,""
+        await browser.close()
+        return header,url
+    except Exception as e:
+        print(f"login_of_share {e}")
+        await client.send_message(chat_id=info.chat.id, text=f"login_of_share {e}", parse_mode='markdown')
+
 
 async def odpriva_downloadFiles(client,info,admin,password,originalPath, req, layers, start=1, num=-1, _id=0):
-    header={}
-    if req == None:
-        req = requests.session()
-        header, originalPath = await login_of_share(client,info,originalPath, admin=admin, password=password)
-        if originalPath=="":
-            await client.edit_message_text(text=f"登录错误", chat_id=info.chat.id,
-                                           message_id=info.message_id,
-                                           parse_mode='markdown')
-            return
-    # print(header)
+    try:
+        header={}
+        if req == None:
+            req = requests.session()
+            header, originalPath = await login_of_share(client,info,originalPath, admin=admin, password=password)
+            if originalPath=="":
+                await client.edit_message_text(text=f"登录错误", chat_id=info.chat.id,
+                                               message_id=info.message_id,
+                                               parse_mode='markdown')
+                return
+        # print(header)
 
-    reqf = req.get(originalPath, headers=header)
-    if "-my" not in originalPath:
-        isSharepoint = True
-        print("sharepoint 链接")
-    else:
-        isSharepoint = False
-
-    # f=open()
-    if ',"FirstRow"' not in reqf.text:
-        print("\t" * layers, "这个文件夹没有文件")
-        return 0
-    filesData = []
-
-    redirectURL = reqf.url
-    redirectSplitURL = redirectURL.split("/")
-    query = dict(urllib.parse.parse_qsl(
-        urllib.parse.urlsplit(redirectURL).query))
-    downloadURL = "/".join(redirectSplitURL[:-1]) + "/download.aspx?UniqueId="
-    if isSharepoint:
-        pat = re.search('templateUrl":"(.*?)"', reqf.text)
-
-        downloadURL = pat.group(1)
-        downloadURL = urllib.parse.urlparse(downloadURL)
-        downloadURL = "{}://{}{}".format(downloadURL.scheme,
-                                         downloadURL.netloc, downloadURL.path).split("/")
-        downloadURL = "/".join(downloadURL[:-1]) + \
-                      "/download.aspx?UniqueId="
-        print(downloadURL)
-
-    # print(reqf.headers)
-
-    s2 = urllib.parse.urlparse(redirectURL)
-    header["referer"] = redirectURL
-    #header["cookie"] = reqf.headers["set-cookie"]
-    header["authority"] = s2.netloc
-
-    headerStr = ""
-    for key, value in header.items():
-        # print(key+':'+str(value))
-        headerStr += key + ':' + str(value) + "\n"
-
-    fileCount = 0
-    # print(headerStr)
-
-    relativeFolder = ""
-    rootFolder = query["id"]
-    for i in rootFolder.split("/"):
-        if i != "Documents":
-            relativeFolder += i + "/"
+        reqf = req.get(originalPath, headers=header)
+        if "-my" not in originalPath:
+            isSharepoint = True
+            print("sharepoint 链接")
         else:
-            relativeFolder += i
-            break
-    relativeUrl = parse.quote(relativeFolder).replace(
-        "/", "%2F").replace("_", "%5F").replace("-", "%2D")
-    rootFolderUrl = parse.quote(rootFolder).replace(
-        "/", "%2F").replace("_", "%5F").replace("-", "%2D")
+            isSharepoint = False
 
-    graphqlVar = '{"query":"query (\n        $listServerRelativeUrl: String!,$renderListDataAsStreamParameters: RenderListDataAsStreamParameters!,$renderListDataAsStreamQueryString: String!\n        )\n      {\n      \n      legacy {\n      \n      renderListDataAsStream(\n      listServerRelativeUrl: $listServerRelativeUrl,\n      parameters: $renderListDataAsStreamParameters,\n      queryString: $renderListDataAsStreamQueryString\n      )\n    }\n      \n      \n  perf {\n    executionTime\n    overheadTime\n    parsingTime\n    queryCount\n    validationTime\n    resolvers {\n      name\n      queryCount\n      resolveTime\n      waitTime\n    }\n  }\n    }","variables":{"listServerRelativeUrl":"%s","renderListDataAsStreamParameters":{"renderOptions":5707527,"allowMultipleValueFilterForTaxonomyFields":true,"addRequiredFields":true,"folderServerRelativeUrl":"%s"},"renderListDataAsStreamQueryString":"@a1=\'%s\'&RootFolder=%s&TryNewExperienceSingle=TRUE"}}' % (relativeFolder, rootFolder, relativeUrl, rootFolderUrl)
+        # f=open()
+        if ',"FirstRow"' not in reqf.text:
+            print("\t" * layers, "这个文件夹没有文件")
+            return 0
+
+        filesData = []
+        redirectURL = reqf.url
+        redirectSplitURL = redirectURL.split("/")
+        query = dict(urllib.parse.parse_qsl(
+            urllib.parse.urlsplit(redirectURL).query))
+        downloadURL = "/".join(redirectSplitURL[:-1]) + "/download.aspx?UniqueId="
+        if isSharepoint:
+            pat = re.search('templateUrl":"(.*?)"', reqf.text)
+
+            downloadURL = pat.group(1)
+            downloadURL = urllib.parse.urlparse(downloadURL)
+            downloadURL = "{}://{}{}".format(downloadURL.scheme,
+                                             downloadURL.netloc, downloadURL.path).split("/")
+            downloadURL = "/".join(downloadURL[:-1]) + \
+                          "/download.aspx?UniqueId="
 
 
-    # print(graphqlVar)
-    s2 = urllib.parse.urlparse(redirectURL)
-    tempHeader = copy.deepcopy(header)
-    tempHeader["referer"] = redirectURL
-    tempHeader["cookie"] = reqf.headers["set-cookie"]
-    tempHeader["authority"] = s2.netloc
-    tempHeader["content-type"] = "application/json;odata=verbose"
-    # print(redirectSplitURL)
+        # print(reqf.headers)
 
-    graphqlReq = req.post(
-        "/".join(redirectSplitURL[:-3]) + "/_api/v2.1/graphql", data=graphqlVar.encode('utf-8'), headers=tempHeader)
-    graphqlReq = json.loads(graphqlReq.text)
-    # print(graphqlReq)
-    if "NextHref" in graphqlReq["data"]["legacy"]["renderListDataAsStream"]["ListData"]:
-        nextHref = graphqlReq[
-                       "data"]["legacy"]["renderListDataAsStream"]["ListData"][
-                       "NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
-                           "%27" + relativeUrl + "%27")
-        filesData.extend(graphqlReq[
-                             "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
-        # print(filesData)
+        s2 = urllib.parse.urlparse(redirectURL)
+        header["referer"] = redirectURL
+        #header["cookie"] = reqf.headers["set-cookie"]
+        header["authority"] = s2.netloc
 
-        listViewXml = graphqlReq[
-            "data"]["legacy"]["renderListDataAsStream"]["ViewMetadata"]["ListViewXml"]
-        renderListDataAsStreamVar = '{"parameters":{"__metadata":{"type":"SP.RenderListDataParameters"},"RenderOptions":1216519,"ViewXml":"%s","AllowMultipleValueFilterForTaxonomyFields":true,"AddRequiredFields":true}}' % (
-            listViewXml).replace('"', '\\"')
-        # print(renderListDataAsStreamVar, nextHref,1)
+        headerStr = ""
+        for key, value in header.items():
+            # print(key+':'+str(value))
+            headerStr += key + ':' + str(value) + "\n"
+        relativeFolder = ""
+        rootFolder = query["id"]
+        for i in rootFolder.split("/"):
+            if i != "Documents":
+                relativeFolder += i + "/"
+            else:
+                relativeFolder += i
+                break
+        relativeUrl = parse.quote(relativeFolder).replace(
+            "/", "%2F").replace("_", "%5F").replace("-", "%2D")
+        rootFolderUrl = parse.quote(rootFolder).replace(
+            "/", "%2F").replace("_", "%5F").replace("-", "%2D")
 
-        # print(listViewXml)
+        graphqlVar = '{"query":"query (\n        $listServerRelativeUrl: String!,$renderListDataAsStreamParameters: RenderListDataAsStreamParameters!,$renderListDataAsStreamQueryString: String!\n        )\n      {\n      \n      legacy {\n      \n      renderListDataAsStream(\n      listServerRelativeUrl: $listServerRelativeUrl,\n      parameters: $renderListDataAsStreamParameters,\n      queryString: $renderListDataAsStreamQueryString\n      )\n    }\n      \n      \n  perf {\n    executionTime\n    overheadTime\n    parsingTime\n    queryCount\n    validationTime\n    resolvers {\n      name\n      queryCount\n      resolveTime\n      waitTime\n    }\n  }\n    }","variables":{"listServerRelativeUrl":"%s","renderListDataAsStreamParameters":{"renderOptions":5707527,"allowMultipleValueFilterForTaxonomyFields":true,"addRequiredFields":true,"folderServerRelativeUrl":"%s"},"renderListDataAsStreamQueryString":"@a1=\'%s\'&RootFolder=%s&TryNewExperienceSingle=TRUE"}}' % (
+        relativeFolder, rootFolder, relativeUrl, rootFolderUrl)
+
+        # print(graphqlVar)
+        s2 = urllib.parse.urlparse(redirectURL)
+        tempHeader = copy.deepcopy(header)
+        tempHeader["referer"] = redirectURL
+        #tempHeader["cookie"] = reqf.headers["set-cookie"]
+        tempHeader["authority"] = s2.netloc
+        tempHeader["content-type"] = "application/json;odata=verbose"
+        # print(redirectSplitURL)
 
         graphqlReq = req.post(
-            "/".join(
-                redirectSplitURL[:-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
-            data=renderListDataAsStreamVar.encode('utf-8'), headers=tempHeader)
+            "/".join(redirectSplitURL[:-3]) + "/_api/v2.1/graphql", data=graphqlVar.encode('utf-8'), headers=tempHeader)
         graphqlReq = json.loads(graphqlReq.text)
         # print(graphqlReq)
+        if "NextHref" in graphqlReq["data"]["legacy"]["renderListDataAsStream"]["ListData"]:
+            nextHref = graphqlReq[
+                           "data"]["legacy"]["renderListDataAsStream"]["ListData"][
+                           "NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
+                               "%27" + relativeUrl + "%27")
+            filesData.extend(graphqlReq[
+                                 "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
+            # print(filesData)
 
-        while "NextHref" in graphqlReq["ListData"]:
-            nextHref = graphqlReq["ListData"]["NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
-                    "%27" + relativeUrl + "%27")
-            filesData.extend(graphqlReq["ListData"]["Row"])
+            listViewXml = graphqlReq[
+                "data"]["legacy"]["renderListDataAsStream"]["ViewMetadata"]["ListViewXml"]
+            renderListDataAsStreamVar = '{"parameters":{"__metadata":{"type":"SP.RenderListDataParameters"},"RenderOptions":1216519,"ViewXml":"%s","AllowMultipleValueFilterForTaxonomyFields":true,"AddRequiredFields":true}}' % (
+                listViewXml).replace('"', '\\"')
+            # print(renderListDataAsStreamVar, nextHref,1)
+
+            # print(listViewXml)
+
             graphqlReq = req.post(
-                "/".join(redirectSplitURL[
-                         :-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
+                "/".join(
+                    redirectSplitURL[:-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
                 data=renderListDataAsStreamVar.encode('utf-8'), headers=tempHeader)
-            # print(graphqlReq.text)
             graphqlReq = json.loads(graphqlReq.text)
             # print(graphqlReq)
-        filesData.extend(graphqlReq["ListData"]["Row"])
-    else:
-        filesData = filesData.extend(graphqlReq[
-                                         "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
-    
-    if filesData==None:
-        pat = re.search(
-            'g_listData = {"wpq":"","Templates":{},"ListData":{ "Row" : ([\s\S]*?),"FirstRow"', reqf.text)
-        filesData = json.loads(pat.group(1))
-    for i in filesData:
-        if i['FSObjType'] == "1":
-            print("\t" * layers, "文件夹：",
-                  i['FileLeafRef'], "\t独特ID：", i["UniqueId"], "正在进入")
-            _query = query.copy()
-            _query['id'] = os.path.join(
-                _query['id'], i['FileLeafRef']).replace("\\", "/")
-            if not isSharepoint:
-                originalPath = "/".join(redirectSplitURL[:-1]) + \
-                               "/onedrive.aspx?" + urllib.parse.urlencode(_query)
-            else:
-                originalPath = "/".join(redirectSplitURL[:-1]) + \
-                               "/AllItems.aspx?" + urllib.parse.urlencode(_query)
 
-
-            fileCount += await odpriva_downloadFiles(client, info,admin,password, originalPath, req, layers + 1, _id=fileCount, start=start,
-                                             num=num)
+            while "NextHref" in graphqlReq["ListData"]:
+                nextHref = graphqlReq["ListData"]["NextHref"] + "&@a1=%s&TryNewExperienceSingle=TRUE" % (
+                        "%27" + relativeUrl + "%27")
+                filesData.extend(graphqlReq["ListData"]["Row"])
+                graphqlReq = req.post(
+                    "/".join(redirectSplitURL[
+                             :-3]) + "/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream" + nextHref,
+                    data=renderListDataAsStreamVar.encode('utf-8'), headers=tempHeader)
+                # print(graphqlReq.text)
+                graphqlReq = json.loads(graphqlReq.text)
+                # print(graphqlReq)
+            filesData.extend(graphqlReq["ListData"]["Row"])
         else:
-            fileCount += 1
-            if num == -1 or start <= fileCount + _id < start + num:
-                print("\t" * layers, "文件 [%d]：%s\t独特ID：%s\t正在推送" %
-                      (fileCount + _id, i['FileLeafRef'], i["UniqueId"]))
-                cc = downloadURL + (i["UniqueId"][1:-1].lower())
-                download_path = f"/root/Download{str(query['id']).split('Documents', 1)[1]}"
-                dd = dict(out=i["FileLeafRef"], header=headerStr, dir=download_path)
-                print(cc, dd)
-                aria2Link = "http://localhost:8080/jsonrpc"
-                aria2Secret = os.environ.get('Aria2_secret')
-                jsonreq = json.dumps({'jsonrpc': '2.0', 'id': 'qwer',
-                                      'method': 'aria2.addUri',
-                                      "params": ["token:" + aria2Secret, [cc], dd]})
+            filesData = filesData.extend(graphqlReq[
+                                             "data"]["legacy"]["renderListDataAsStream"]["ListData"]["Row"])
 
-                c = requests.post(aria2Link, data=jsonreq)
+        fileCount = 0
+        # print(headerStr)
+        if filesData == None:
+            pat = re.search(
+                'g_listData = {"wpq":"","Templates":{},"ListData":{ "Row" : ([\s\S]*?),"FirstRow"', reqf.text)
+            filesData = json.loads(pat.group(1))
+        for i in filesData:
+            if i['FSObjType'] == "1":
 
-                text = f"推送下载：`{i['FileLeafRef']}`\n下载路径:`{download_path}`\n推送结果:`{c.text}`"
-                try:
-                    await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
-                                                   parse_mode='markdown')
-                except Exception as e:
-                    print(f"修改信息失败:{e}")
-                time.sleep(0.5)
+                _query = query.copy()
+                _query['id'] = os.path.join(
+                    _query['id'], i['FileLeafRef']).replace("\\", "/")
+                if not isSharepoint:
+                    originalPath = "/".join(redirectSplitURL[:-1]) + \
+                                   "/onedrive.aspx?" + urllib.parse.urlencode(_query)
+                else:
+                    originalPath = "/".join(redirectSplitURL[:-1]) + \
+                                   "/AllItems.aspx?" + urllib.parse.urlencode(_query)
+
+                fileCount += await odpriva_downloadFiles(client, info,admin,password, originalPath, req, layers + 1, _id=fileCount, start=start,
+                                                 num=num)
             else:
-                print("\t" * layers, "文件 [%d]：%s\t独特ID：%s\t非目标文件" %
-                      (fileCount + _id, i['FileLeafRef'], i["UniqueId"]))
-    return fileCount
+                fileCount += 1
+                if num == -1 or start <= fileCount + _id < start + num:
+                    print("\t" * layers, "文件 [%d]：%s\t独特ID：%s\t正在推送" %
+                          (fileCount + _id, i['FileLeafRef'], i["UniqueId"]))
+                    cc = downloadURL + (i["UniqueId"][1:-1].lower())
+                    download_path = f"/root/Download{str(query['id']).split('Documents', 1)[1]}"
+                    dd = dict(out=i["FileLeafRef"], header=headerStr, dir=download_path)
+                    print(cc, dd)
+                    aria2Link = "http://localhost:8080/jsonrpc"
+                    aria2Secret = os.environ.get('Aria2_secret')
+                    jsonreq = json.dumps({'jsonrpc': '2.0', 'id': 'qwer',
+                                          'method': 'aria2.addUri',
+                                          "params": ["token:" + aria2Secret, [cc], dd]})
+
+                    c = requests.post(aria2Link, data=jsonreq)
+
+                    text = f"推送下载：`{i['FileLeafRef']}`\n下载路径:`{download_path}`\n推送结果:`{c.text}`"
+                    try:
+                        await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                                       parse_mode='markdown')
+                    except Exception as e:
+                        print(f"修改信息失败:{e}")
+                    time.sleep(0.5)
+
+        return fileCount
+    except Exception as e:
+        print(f"odpriva_downloadFiles {e}")
+        await client.send_message(chat_id=info.chat.id, text=f"odpriva_downloadFiles {e}", parse_mode='markdown')
 
 
 async def odprivate_download(client, message):
     try:
 
         try:
-
             login_info=str(message.text).split(" ")
-            print(login_info)
+            print(f"odprivate_download{login_info}")
             admin=login_info[1]
             password=login_info[2]
             odprivate_url=login_info[3]
-        except:
+        except Exception as e:
+            print(e)
             text="身份信息获取失败\n" \
                  "使用方法为:/odprivate 邮箱 密码 链接"
             await client.send_message(chat_id=message.chat.id, text=text, parse_mode='markdown')
@@ -538,6 +537,17 @@ async def odprivate_download(client, message):
         print(f"odprivate error {e}")
         await client.send_message(chat_id=message.chat.id, text=f"odprivate error {e}", parse_mode='markdown')
 
+def run_shell(gid,file_num,file_dir):
+    shell = f"bash upload.sh \"{gid}\" \"{file_num}\" '{file_dir}' "
+
+    print(shell)
+    cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True,
+                           stdout=subprocess.PIPE, universal_newlines=True, shell=True, bufsize=1)
+    while True:
+        time.sleep(2)
+        if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
+            print("上传结束")
+            return
 
 def check_upload(api, gid):
 
@@ -570,16 +580,11 @@ def check_upload(api, gid):
         print(f"上传该任务:{file_dir}")
         sys.stdout.flush()
 
-        shell=f"bash upload.sh \"{gid}\" \"{file_num}\" '{file_dir}' "
 
-        print(shell)
-        cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True,
-                               stdout=subprocess.PIPE, universal_newlines=True, shell=True, bufsize=1)
-        while True:
-            time.sleep(2)
-            if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
-                print("上传结束")
-                return
+
+        t1 = threading.Thread(target=run_shell, args=(gid,file_num,file_dir))
+        t1.start()
+
 
 async def run_await_rclone(dir,title,info,file_num,client, message,gid):
     global task
