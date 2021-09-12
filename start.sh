@@ -21,6 +21,7 @@ rm -rf /bot
 git clone https://github.com/666wcy/ARPT-Bot.git
 mkdir /bot/
 mv /ARPT-Bot/bot/* /bot/
+rm -rf /ARPT-Bot
 
 #python3 /bot/nginx.py
 nginx -c /etc/nginx/nginx.conf
