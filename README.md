@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-09-10 17:22:29
+ * @LastEditTime: 2021-09-23 21:02:50
 -->
 
 [![GitHub Stars](https://img.shields.io/github/stars/666wcy/ARPT-Bot.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/linuxserver/docker-qbittorrent) [![Docker Pulls](https://img.shields.io/docker/pulls/benchao/arpt.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=pulls&logo=docker)](https://hub.docker.com/repository/docker/benchao/arpt) [![GitHub Release](https://img.shields.io/docker/v/benchao/arpt?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=最新版本&logo=docker)](https://github.com/linuxserver/docker-qbittorrent/releases)
@@ -10,6 +10,13 @@
 
 v2.0.9
 
+修改rclone调用方式，改为rc http api调用。
+
+新增对[RcloneNg](https://github.com/ElonH/RcloneNg)的支持。
+
+映射rclone rc，支持自定义对rclone rc进行操作,具体操作可参考[rclone rc教程](https://rclone.org/rc/)
+
+***
 此版本后支持自动更新，Python文件的变动只需重启即可更新，其它硬性更新才会通过docker更新版本
 
 修复aria2面板添加的任务与conf文件的配置冲突导致本地文件被删除 [#18](https://github.com/666wcy/ARPT-Bot/issues/18)[#16](https://github.com/666wcy/ARPT-Bot/issues/16)
@@ -140,12 +147,11 @@ v1.1.4
 
 - [X] 文件管理
   - [X] 修改主界面为 [filebrowser](https://github.com/filebrowser/filebrowser)，账号为**admin**，密码为**admin**,主界面路径：http://ip:port,请自行修改密码
-  - [X] ~~[FolderMagic](https://github.com/FolderMagic/FolderMagic)自带的webdav：路径:http://ip:port/webdav 。账号密码同FolderMagic，不支持网页端，需要支持webdav的软件(在Raildrive上测试成功)~~ 由于其只支持amd64架构，使用[filebrowser](https://github.com/filebrowser/filebrowser)将其代替
 
 - [X] 网页面板
   - [X] 支持 [AriaNg](https://github.com/mayswind/AriaNg) 面板,地址为：https://ip:port/ng/
-  - [X] ~~新增 [ServerStatus-Hotaru](https://github.com/cokemine/ServerStatus-Hotaru) 作为容器探针。探针地址:http://ip:port/status/~~ 鸡肋功能，删除
   - [X] 用**Nginx**为内部端口反代，替换原来的的Python Flask，更加轻量
+- [X] 支持[RcloneNg](https://github.com/ElonH/RcloneNg)，登录时地址为`http://ip:port`,请自行修改`ip`和`port`，用户名为admin,密码为你设定的`Aria2_secret`
 
 
 - [X] Aria2
