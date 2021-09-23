@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from config import aria2, BOT_name,Rclone_share
+from config import aria2, BOT_name,Rclone_share,Aria2_secret
 import sys
 from pyrogram.types import InlineKeyboardMarkup,InlineKeyboardButton
 import os
@@ -593,88 +593,139 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
     sys.stdout.flush()
     Rclone_remote=os.environ.get('Remote')
     Upload=os.environ.get('Upload')
+
+    rc_url = f"http://root:{Aria2_secret}@127.0.0.1:5572"
     info = await client.send_message(chat_id=message.chat.id, text="开始上传", parse_mode='markdown')
     name=f"{str(info.message_id)}_{str(info.chat.id)}"
+
     if int(file_num)==1:
-        shell=f"rclone copy \"{dir}\" \"{Rclone_remote}:{Upload}\"  -v --stats-one-line --stats=1s --log-file=\"{name}.log\" "
-    else:
-        shell=f"rclone copy \"{dir}\" \"{Rclone_remote}:{Upload}/{title}\"  -v --stats-one-line --stats=1s --log-file=\"{name}.log\" "
-    print(shell)
-    cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True,
-                           stdout=subprocess.PIPE, universal_newlines=True, shell=True, bufsize=1)
-    # 实时输出
-    temp_text=None
-    while True:
-        time.sleep(2)
-        fname = f'{name}.log'
-        with open(fname, 'r') as f:  #打开文件
-            try:
-                lines = f.readlines() #读取所有行
+        rcd_copyfile_url = f"{rc_url}/operations/copyfile"
+        drv, left = os.path.split(dir)
+        data = {
+            "srcFs": drv,
+            "srcRemote": left,
+            "dstFs": f"{Rclone_remote}:{Upload}",
+            "dstRemote": left,
+            "_async": True,
+        }
 
-                for a in range(-1,-10,-1):
-                    last_line = lines[a] #取最后一行
-                    if last_line !="\n":
-                        break
+        html = requests.post(url=rcd_copyfile_url, json=data)
+        result = html.json()
+
+        jobid = result["jobid"]
+
+        rcd_status_url = f"{rc_url}/job/status"
 
 
-                if temp_text != last_line and "ETA" in last_line:
-                    print(f"上传中\n{last_line} end")
-                    sys.stdout.flush()
-                    log_time,file_part,upload_Progress,upload_speed,part_time=re.findall("(.*?)INFO.*?(\d.*?),.*?(\d+%),.*?(\d.*?s).*?ETA(.*?s|m|h)",last_line , re.S)[0]
-                    text=f"{title}\n" \
-                         f"更新时间：`{log_time}`\n" \
-                         f"上传部分：`{file_part}`\n" \
-                         f"上传进度：`{upload_Progress}`\n" \
-                         f"上传速度：`{upload_speed}`\n" \
-                         f"剩余时间:`{part_time}`"
-                    try:
-                        print(f"修改信息 {text}")
-                        sys.stdout.flush()
-                        try:
-                            await client.edit_message_text(text=text,chat_id=info.chat.id,message_id=info.message_id,parse_mode='markdown')
-                        except:
-                            None
-                    except Exception as e:
-                        print(f"修改信息失败 {e}")
-                        sys.stdout.flush()
-                    temp_text = last_line
-                f.close()
+        while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
 
-            except Exception as e:
-                print(f"检查进度失败 {e}")
-                sys.stdout.flush()
-                f.close()
-                continue
+            job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
+            print(job_status)
+            if "transferring" in job_status:
 
-        if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
-            print("上传结束")
-            try:
-                if Rclone_share == False:
-                    await client.send_message(text=f"{title}\n上传结束", chat_id=info.chat.id)
-                    return
+                if job_status['transferring'][0]['eta'] == None:
+                    eta = "暂无"
                 else:
-                    if int(file_num) == 1:
-                        file_name = os.path.basename(dir)
-                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{file_name}\" --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
-                    else:
-                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{title}\"  --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
-                    print(f"获取分享链接:{upload_shell}")
-                    val = os.popen(upload_shell)
-                    share_url = val.read()
-                    await client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
-                    os.remove(f"{name}.log")
-                    task.remove(gid)
-                    return
-            except Exception as e:
-                print(e)
-                try:
-                    os.remove(f"{name}.log")
-                    task.remove(gid)
-                    return
-                except:
-                    return
+                    eta = cal_time(job_status['transferring'][0]['eta'])
+                print(f"剩余时间:{eta}")
 
-    return
+                text = f"任务ID:`{jobid}`\n" \
+                       f"任务名称:`{title}`\n" \
+                       f"传输部分:`{hum_convert(job_status['transferring'][0]['bytes'])}/{hum_convert(job_status['transferring'][0]['size'])}`\n" \
+                       f"传输进度:`{job_status['transferring'][0]['percentage']}%`\n" \
+                       f"传输速度:`{hum_convert(job_status['transferring'][0]['speed'])}/s`\n" \
+                       f"平均速度:`{hum_convert(job_status['transferring'][0]['speedAvg'])}/s`\n"
+
+                try:
+                    await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                             parse_mode='markdown')
+
+                except:
+                    continue
+
+            else:
+                print("等待信息加载")
+
+            time.sleep(1)
+
+
+    else:
+        rcd_copyfile_url = f"{rc_url}/sync/copy"
+
+        data = {
+            "srcFs": dir,
+            "dstFs": f"{Rclone_remote}:{Upload}/{title}",
+            "createEmptySrcDirs": True,
+            "_async": True,
+        }
+
+        html = requests.post(url=rcd_copyfile_url, json=data)
+        result = html.json()
+        jobid = result["jobid"]
+
+        rcd_status_url = f"{rc_url}/job/status"
+
+
+        while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
+
+            job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
+            print(job_status)
+            if "transferring" in job_status:
+
+                if job_status['eta'] == None:
+                    eta = "暂无"
+                else:
+                    eta = cal_time(job_status['eta'])
+                print(f"剩余时间:{eta}")
+
+                text = f"任务ID:`{jobid}`\n" \
+                       f"任务名称:`{title}`\n" \
+                       f"传输部分:`{hum_convert(job_status['bytes'])}/{hum_convert(job_status['totalBytes'])}`\n" \
+                       f"传输进度:`{only_progessbar(job_status['bytes'], job_status['totalBytes'])}%`\n" \
+                       f"传输速度:`{hum_convert(job_status['speed'])}/s`\n" \
+                       f"剩余时间:`{eta}`"
+
+                try:
+                    await client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                             parse_mode='markdown')
+
+                except:
+                    continue
+
+            else:
+                print("等待信息")
+
+            time.sleep(1)
+
+
+    requests.post(url=f"{rc_url}/core/stats-delete", json={"group": f"job/{jobid}"}).json()
+    requests.post(url=f"{rc_url}/fscache/clear").json()
+    print("上传结束")
+    try:
+        if Rclone_share==False:
+            await client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
+            return
+        else:
+            if int(file_num) == 1:
+                file_name = os.path.basename(dir)
+                upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{file_name}\" --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+            else:
+                upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{title}\"  --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+            print(f"获取分享链接:{upload_shell}")
+            val = os.popen(upload_shell)
+            share_url = val.read()
+            await client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
+            os.remove(f"{name}.log")
+            task.remove(gid)
+            return
+    except Exception as e:
+        print(e)
+        try:
+            os.remove(f"{name}.log")
+            task.remove(gid)
+            return
+        except:
+            return
 
 
 def the_download(client, message,url):
@@ -893,7 +944,17 @@ def the_download(client, message,url):
             print("Upload Issue!")
     return None
 
-
+def cal_time(upload_time):
+    m, s = divmod(int(upload_time), 60)
+    h, m = divmod(m, 60)
+    #print("%02d时%02d分%02d秒" % (h, m, s))
+    if h != 0:
+        last_time = "%d时%d分%d秒" % (h, m, s)
+    elif h == 0 and m != 0:
+        last_time = "%d分%d秒" % (m, s)
+    else:
+        last_time = "%d秒" % s
+    return last_time
 
 def start_download(client, message):
     try:
@@ -912,85 +973,160 @@ def start_download(client, message):
     except Exception as e:
         print(f"magnet :{e}")
 
+def only_progessbar(new, tot):
+    """Builds progressbar
+    Args:
+        new: current progress
+        tot: total length of the download
+    Returns:
+        progressbar as a string of length 20
+    """
+    length = 20
+    progress = int(round(length * new / float(tot)))
+    percent = round(new/float(tot) * 100.0, 1)
+    bar = '=' * progress + '-' * (length - progress)
+    return percent
+
 def run_rclone(dir,title,info,file_num,client, message,gid):
     global task
     task.append(gid)
     print(task)
     sys.stdout.flush()
+    rc_url = f"http://root:{Aria2_secret}@127.0.0.1:5572"
+
+
     Rclone_remote=os.environ.get('Remote')
     Upload=os.environ.get('Upload')
     name=f"{str(info.message_id)}_{str(info.chat.id)}"
+
+
     if int(file_num)==1:
-        shell=f"rclone copy \"{dir}\" \"{Rclone_remote}:{Upload}\"  -v --stats-one-line --stats=1s --log-file=\"{name}.log\" "
-    else:
-        shell=f"rclone copy \"{dir}\" \"{Rclone_remote}:{Upload}/{title}\"  -v --stats-one-line --stats=1s --log-file=\"{name}.log\" "
-    print(shell)
-    cmd = subprocess.Popen(shell, stdin=subprocess.PIPE, stderr=sys.stderr, close_fds=True,
-                           stdout=subprocess.PIPE, universal_newlines=True, shell=True, bufsize=1)
-    # 实时输出
-    temp_text=None
-    while True:
-        time.sleep(1)
-        fname = f'{name}.log'
-        with open(fname, 'r') as f:  #打开文件
-            try:
-                lines = f.readlines() #读取所有行
+        rcd_copyfile_url = f"{rc_url}/operations/copyfile"
+        drv, left = os.path.split(dir)
+        data = {
+            "srcFs": drv,
+            "srcRemote": left,
+            "dstFs": f"{Rclone_remote}:{Upload}",
+            "dstRemote": left,
+            "_async": True,
+        }
 
-                for a in range(-1,-10,-1):
-                    last_line = lines[a] #取最后一行
-                    if last_line !="\n":
-                        break
+        html = requests.post(url=rcd_copyfile_url, json=data)
+        result = html.json()
 
-                print (f"上传中\n{last_line}")
-                if temp_text != last_line and "ETA" in last_line:
-                    log_time,file_part,upload_Progress,upload_speed,part_time=re.findall("(.*?)INFO.*?(\d.*?),.*?(\d+%),.*?(\d.*?s).*?ETA(.*?s|m|h)",last_line , re.S)[0]
-                    text=f"{title}\n" \
-                         f"更新时间：`{log_time}`\n" \
-                         f"上传部分：`{file_part}`\n" \
-                         f"上传进度：`{upload_Progress}`\n" \
-                         f"上传速度：`{upload_speed}`\n" \
-                         f"剩余时间:`{part_time}`"
-                    try:
-                        client.edit_message_text(text=text,chat_id=info.chat.id,message_id=info.message_id,parse_mode='markdown')
-                        temp_text = last_line
-                    except:
-                        None
-                f.close()
+        jobid = result["jobid"]
 
-            except Exception as e:
-                print(e)
-                f.close()
-                continue
+        rcd_status_url = f"{rc_url}/job/status"
 
-        if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
-            print("上传结束")
-            try:
-                if Rclone_share==False:
-                    client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
-                    return
+
+        while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
+
+            job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
+            print(job_status)
+            if "transferring" in job_status:
+
+                if job_status['transferring'][0]['eta'] == None:
+                    eta = "暂无"
                 else:
-                    if int(file_num) == 1:
-                        file_name = os.path.basename(dir)
-                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{file_name}\" --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
-                    else:
-                        upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{title}\"  --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
-                    print(f"获取分享链接:{upload_shell}")
-                    val = os.popen(upload_shell)
-                    share_url = val.read()
-                    client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
-                    os.remove(f"{name}.log")
-                    task.remove(gid)
-                    return
-            except Exception as e:
-                print(e)
-                try:
-                    os.remove(f"{name}.log")
-                    task.remove(gid)
-                    return
-                except:
-                    return
+                    eta = cal_time(job_status['transferring'][0]['eta'])
+                print(f"剩余时间:{eta}")
 
-    return
+                text = f"任务ID:`{jobid}`\n" \
+                       f"任务名称:`{title}`\n" \
+                       f"传输部分:`{hum_convert(job_status['transferring'][0]['bytes'])}/{hum_convert(job_status['transferring'][0]['size'])}`\n" \
+                       f"传输进度:`{job_status['transferring'][0]['percentage']}%`\n" \
+                       f"传输速度:`{hum_convert(job_status['transferring'][0]['speed'])}/s`\n" \
+                       f"平均速度:`{hum_convert(job_status['transferring'][0]['speedAvg'])}/s`\n"
+
+                try:
+                    client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                             parse_mode='markdown')
+
+                except:
+                    continue
+
+            else:
+                print("等待信息加载")
+
+            time.sleep(1)
+
+
+    else:
+        rcd_copyfile_url = f"{rc_url}/sync/copy"
+
+        data = {
+            "srcFs": dir,
+            "dstFs": f"{Rclone_remote}:{Upload}/{title}",
+            "createEmptySrcDirs": True,
+            "_async": True,
+        }
+
+        html = requests.post(url=rcd_copyfile_url, json=data)
+        result = html.json()
+        jobid = result["jobid"]
+
+        rcd_status_url = f"{rc_url}/job/status"
+
+
+        while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
+
+            job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
+            print(job_status)
+            if "transferring" in job_status:
+
+                if job_status['eta'] == None:
+                    eta = "暂无"
+                else:
+                    eta = cal_time(job_status['eta'])
+                print(f"剩余时间:{eta}")
+
+                text = f"任务ID:`{jobid}`\n" \
+                       f"任务名称:`{title}`\n" \
+                       f"传输部分:`{hum_convert(job_status['bytes'])}/{hum_convert(job_status['totalBytes'])}`\n" \
+                       f"传输进度:`{only_progessbar(job_status['bytes'], job_status['totalBytes'])}%`\n" \
+                       f"传输速度:`{hum_convert(job_status['speed'])}/s`"
+
+                try:
+                    client.edit_message_text(text=text, chat_id=info.chat.id, message_id=info.message_id,
+                                             parse_mode='markdown')
+
+                except:
+                    continue
+
+            else:
+                print("等待信息")
+
+            time.sleep(1)
+    requests.post(url=f"{rc_url}/core/stats-delete", json={"group": f"job/{jobid}"}).json()
+    requests.post(url=f"{rc_url}/fscache/clear").json()
+    print("上传结束")
+    try:
+        if Rclone_share==False:
+            client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
+            return
+        else:
+            if int(file_num) == 1:
+                file_name = os.path.basename(dir)
+                upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{file_name}\" --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+            else:
+                upload_shell = f"rclone link  \"{Rclone_remote}:{Upload}/{title}\"  --onedrive-link-scope=\"organization\"  --onedrive-link-type=\"view\""
+            print(f"获取分享链接:{upload_shell}")
+            val = os.popen(upload_shell)
+            share_url = val.read()
+            client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
+            os.remove(f"{name}.log")
+            task.remove(gid)
+            return
+    except Exception as e:
+        print(e)
+        try:
+            os.remove(f"{name}.log")
+            task.remove(gid)
+            return
+        except:
+            return
+
+
 
 
 def start_http_download(client, message):

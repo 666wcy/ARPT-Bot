@@ -148,7 +148,7 @@ async def status(client, message):
 
 def start_bot():
     # scheduler = BlockingScheduler()
-    if App_title=="":
+    if App_title!="":
         scheduler = BackgroundScheduler()
 
         scheduler.add_job(new_clock, "interval", seconds=60)
