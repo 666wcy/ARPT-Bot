@@ -151,7 +151,7 @@ v1.1.4
 - [X] 网页面板
   - [X] 支持 [AriaNg](https://github.com/mayswind/AriaNg) 面板,地址为：https://ip:port/ng/
   - [X] 用**Nginx**为内部端口反代，替换原来的的Python Flask，更加轻量
-- [X] 支持[RcloneNg](https://github.com/ElonH/RcloneNg)，登录时地址为`http://ip:port`,请自行修改`ip`和`port`，用户名为admin,密码为你设定的`Aria2_secret`
+- [X] 支持[RcloneNg](https://github.com/ElonH/RcloneNg)，登录时地址为`http://ip:port`,请自行修改`ip`和`port`，用户名为root,密码为你设定的`Aria2_secret`
 
 
 - [X] Aria2
