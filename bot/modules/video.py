@@ -37,10 +37,6 @@ class Download_video():
                 try:
                     self.client.edit_message_text(text=text, chat_id=self.info.chat.id, message_id=self.info.message_id,
                                                   parse_mode='markdown')
-                    if App_title != "":
-                        print("视频正在下载,保持唤醒")
-                        print(requests.get(url=f"https://{App_title}.herokuapp.com/"))
-                        sys.stdout.flush()
                 except:
                     None
 
@@ -89,7 +85,7 @@ class Download_video():
 
             sys.stdout.flush()
             if "video" in self.call.data:
-                run_rclone(video_name, video_name, info=self.info, file_num=1, client=self.client, message=self.info,gid=0)
+                run_rclone(dir=f"/{video_name}", title=video_name, info=self.info, file_num=1, client=self.client, message=self.info,gid=0)
                 os.remove(video_name)
                 self.client.delete_messages(chat_id=self.call.message.chat.id, message_ids=self.call.message.message_id)
             elif "mp3" in self.call.data:
@@ -100,7 +96,7 @@ class Download_video():
                                               parse_mode='markdown')
                 audio_name = tem + ".mp3"
                 os.system(f"ffmpeg -i \"{video_name}\" -f mp3 -vn \"{audio_name}\"")
-                run_rclone(audio_name, audio_name, info=self.info, file_num=1, client=self.client, message=self.info,gid=0)
+                run_rclone(f"/{audio_name}", audio_name, info=self.info, file_num=1, client=self.client, message=self.info,gid=0)
                 os.remove(video_name)
                 self.client.delete_messages(chat_id=self.call.message.chat.id, message_ids=self.call.message.message_id)
                 os.remove(audio_name)
