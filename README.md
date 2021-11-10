@@ -1,7 +1,7 @@
 <!--
  * @Date: 2021-06-05 12:04:51
  * @LastEditors: Ben
- * @LastEditTime: 2021-09-23 21:02:50
+ * @LastEditTime: 2021-11-10 21:16:31
 -->
 
 [![GitHub Stars](https://img.shields.io/github/stars/666wcy/ARPT-Bot.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/linuxserver/docker-qbittorrent) [![Docker Pulls](https://img.shields.io/docker/pulls/benchao/arpt.svg?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=pulls&logo=docker)](https://hub.docker.com/repository/docker/benchao/arpt) [![GitHub Release](https://img.shields.io/docker/v/benchao/arpt?color=inactived&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=最新版本&logo=docker)](https://github.com/linuxserver/docker-qbittorrent/releases)
@@ -146,7 +146,7 @@ v1.1.4
 主要功能:
 
 - [X] 文件管理
-  - [X] 修改主界面为 [filebrowser](https://github.com/filebrowser/filebrowser)，账号为**admin**，密码为**admin**,主界面路径：http://ip:port,请自行修改密码
+  - [X] 修改主界面为 [filebrowser](https://github.com/filebrowser/filebrowser)，账号为**admin**，密码为你设定的`Aria2_secret`,主界面路径：http://ip:port,请自行修改密码
 
 - [X] 网页面板
   - [X] 支持 [AriaNg](https://github.com/mayswind/AriaNg) 面板,地址为：https://ip:port/ng/
@@ -289,7 +289,7 @@ Error_user_info 可不填，可设置非允许使用者发送消息时的提示�
 ```
 
 在Docker运行后访问ip:port访问文件管理器，~~在/.config/rclone下文件夹新建rclone.conf,粘贴自己的rclone配置。~~
-PS:有人反馈此处配置不成功，可尝试在/root/.config/rclone也添加配置，bot运行 **/rclone 盘符** ，可以查看是否成功
+PS:有人反馈此处配置不成功，可尝试在/root/.config/rclone也添加配置，bot运行 **/rclone 盘符:** ，可以查看是否成功
 关于上传方法，将.conf文件拖入浏览器即可。
 
 ![成功效果](https://cdn.jsdelivr.net/gh/666wcy/img_share@main/img/image.2abs656qyrb4.png)
