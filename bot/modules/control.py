@@ -620,14 +620,14 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
         while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
 
             job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
-            print(job_status)
+            
             if "transferring" in job_status:
 
                 if job_status['transferring'][0]['eta'] == None:
                     eta = "暂无"
                 else:
                     eta = cal_time(job_status['transferring'][0]['eta'])
-                print(f"剩余时间:{eta}")
+                
 
                 text = f"任务ID:`{jobid}`\n" \
                        f"任务名称:`{title}`\n" \
@@ -669,14 +669,14 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
         while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
 
             job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
-            print(job_status)
+            
             if "transferring" in job_status:
 
                 if job_status['eta'] == None:
                     eta = "暂无"
                 else:
                     eta = cal_time(job_status['eta'])
-                print(f"剩余时间:{eta}")
+                
 
                 text = f"任务ID:`{jobid}`\n" \
                        f"任务名称:`{title}`\n" \
@@ -832,12 +832,12 @@ def the_download(client, message,url):
     try:
         client.edit_message_text(text="Download complete", chat_id=info.chat.id, message_id=info.message_id,
                              parse_mode='markdown', reply_markup=new_reply_markup)
-    except:
-        None
+    except Exception as e:
+        print(e)
 
     prevmessage = None
 
-    while currdownload.is_active or not currdownload.is_complete:
+    while True:
 
         try:
             currdownload.update()
@@ -852,6 +852,7 @@ def the_download(client, message,url):
                 break
             print(e)
             print("Issue in downloading!")
+            continue
 
         if currdownload.status == 'removed':
             print("Magnet was cancelled")
@@ -926,23 +927,19 @@ def the_download(client, message,url):
                 print(e)
                 print("Download Paused Flood")
                 time.sleep(2)
+        if currdownload.status=="complete":
+            break
         time.sleep(2)
 
 
+    print("开始上传")
+    file_dir=f"{currdownload.dir}/{currdownload.name}"
+    files_num=int(len(currdownload.files))
+    run_rclone(file_dir,currdownload.name,info=info,file_num=files_num,client=client,message=message,gid=currdownload.gid)
+    currdownload.remove(force=True,files=True)
 
-    if currdownload.is_complete:
-        print(currdownload.name)
-        try:
-            print("开始上传")
-            file_dir=f"{currdownload.dir}/{currdownload.name}"
-            files_num=int(len(currdownload.files))
-            run_rclone(file_dir,currdownload.name,info=info,file_num=files_num,client=client,message=message,gid=currdownload.gid)
-            currdownload.remove(force=True,files=True)
 
-        except Exception as e:
-            print(e)
-            print("Upload Issue!")
-    return None
+    return
 
 def cal_time(upload_time):
     m, s = divmod(int(upload_time), 60)
@@ -1010,6 +1007,7 @@ def run_rclone(dir,title,info,file_num,client, message,gid):
             "dstRemote": left,
             "_async": True,
         }
+        print(data)
 
         html = requests.post(url=rcd_copyfile_url, json=data)
         result = html.json()
@@ -1485,6 +1483,7 @@ async def more_magnet(client, message):
             if "\n" in text:
 
                 magnet_list=str(text).split("\n")
+
                 for magnet in magnet_list:
                     t1 = threading.Thread(target=the_download, args=(client, message, magnet))
                     t1.start()
@@ -1492,6 +1491,7 @@ async def more_magnet(client, message):
             else:
                 t1 = threading.Thread(target=the_download, args=(client, message,text))
                 t1.start()
+            await client.delete_messages(chat_id=message.chat.id, message_ids=message.message_id)
     except Exception as e :
         print(f"more_magnet error :{e}")
         await client.send_message(chat_id=message.chat.id, text=f"more_magnet error :{e}")
@@ -1503,7 +1503,7 @@ async def temp_telegram_file(client, message,file_list):
             answer = await client.ask(chat_id=message.chat.id, text='请发送TG文件,或输入 /cancel 取消')
         else:
             answer = await client.ask(chat_id=message.chat.id,
-                                      text=f'已接收{len(file_list)}个文件，请继续发送TG文件，输入 /finish 取消,或输入 /cancel 取消')
+                                      text=f'已接收{len(file_list)}个文件，请继续发送TG文件，输入 /finish 开始任务,或输入 /cancel 取消')
         info = answer
         if info.media_group_id != None:
             media = await client.get_media_group(chat_id=info.chat.id, message_id=info.message_id)

@@ -47,14 +47,14 @@ async def start_rclonecopy(client, message):
         while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
 
             job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
-            print(job_status)
+            
             if "transferring" in job_status:
 
                 if job_status['eta'] == None:
                     eta = "暂无"
                 else:
                     eta = cal_time(job_status['eta'])
-                print(f"剩余时间:{eta}")
+                
 
                 text = f"任务ID:`{jobid}`\n" \
                        f"源地址:`{firstdir}`\n" \

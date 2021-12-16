@@ -564,7 +564,7 @@ async def start_download_pixiv_top(client, call):
         sys.stdout.flush()
         del_path(author)
         try:
-            await run_await_rclone(client=client, dir=name, title=name, info=info, file_num=1, message=info,gid=0)
+            await run_await_rclone(client=client, dir=f'/{name}', title=name, info=info, file_num=1, message=info,gid=0)
             print("uploading")
         except Exception as e:
             print(f"{e}")
@@ -1082,7 +1082,7 @@ async def start_download_pixiv(client, call):
         sys.stdout.flush()
         del_path(keywords)
         try:
-            await run_await_rclone(client=client,dir=name,title=name,info=info,file_num=1,message=info,gid=0)
+            await run_await_rclone(client=client,dir=f'/{name}',title=name,info=info,file_num=1,message=info,gid=0)
             print("uploading")
         except Exception as e:
             print(f"{e}")

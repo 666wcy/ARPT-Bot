@@ -14,6 +14,7 @@ session =requests.session()
 
 async def send_photo(client, message):
   print(message)
+  await client.delete_messages(chat_id=message.chat.id, message_ids=message.message_id)
   new_inline_keyboard = [
             [
                 InlineKeyboardButton(
@@ -118,8 +119,8 @@ def saucenao(client, message):
                     ]
                 ]
 
-                new_reply_markup = InlineKeyboardMarkup(inline_keyboard=new_inline_keyboard)            
-                
+                new_reply_markup = InlineKeyboardMarkup(inline_keyboard=new_inline_keyboard)
+
                 client.send_photo(chat_id=message.message.chat.id,photo=img,reply_markup=new_reply_markup,parse_mode='markdown',caption=text)
             except Exception as e:
                 print(e)

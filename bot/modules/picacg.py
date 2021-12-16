@@ -19,7 +19,7 @@ def wake_clock():
     try:
         if App_title!="":
             print("任务正在进行,保持唤醒")
-            print(requests.get(url=f"https://{App_title}.herokuapp.com/"))
+            print(requests.get(url=f"http://{App_title}.herokuapp.com/"))
             sys.stdout.flush()
 
     except Exception as e:
@@ -424,7 +424,7 @@ def add_download(client,call):
         print("压缩完成，开始上传")
         del_path(title)
         try:
-            run_rclone(dir=name,title=title,info=info,file_num=1,client=client,message=call,gid=0)
+            run_rclone(dir=f"/{name}",title=title,info=info,file_num=1,client=client,message=call,gid=0)
             print("uploading")
         except Exception as e:
             print(f"{e}")

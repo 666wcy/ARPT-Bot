@@ -12,7 +12,7 @@ def new_clock():
             if download.status=="active":
                 print(download.name, download.download_speed)
                 print("任务正在进行,保持唤醒")
-                print(requests.get(url=f"https://{App_title}.herokuapp.com/"))
+                print(requests.get(url=f"http://{App_title}.herokuapp.com/"))
                 sys.stdout.flush()
                 break
         else:
@@ -24,20 +24,15 @@ def new_clock():
 #检查rclone
 def second_clock():
     try:
-        for proc in psutil.process_iter():
-            try:
-                pinfo = proc.as_dict(attrs=['pid', 'name'])
-            except psutil.NoSuchProcess:
-                pass
-            else:
-                rc_url = f"http://root:{Aria2_secret}@127.0.0.1:5572"
-                job_status = requests.post(url=f"{rc_url}/core/stats").json()
 
-                if int(job_status['speed'])!= 0:
-                    print("rclone 正在上传")
-                    print(requests.get(url=f"https://{App_title}.herokuapp.com/"))
-                    sys.stdout.flush()
-                    break
+        rc_url = f"http://root:{str(Aria2_secret)}@127.0.0.1:5572"
+        job_status = requests.post(url=f"{rc_url}/core/stats").json()
+        #print(job_status)
+        if "transferring" in job_status:
+            print("rclone 正在上传")
+            print(requests.get(url=f"http://{App_title}.herokuapp.com/"))
+            sys.stdout.flush()
+
         else:
             print("rclone 不在运行")
             sys.stdout.flush()
