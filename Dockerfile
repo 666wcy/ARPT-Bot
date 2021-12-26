@@ -40,7 +40,7 @@ RUN pip3 install telegraph
 RUN pip3 install aria2p
 RUN pip3 install mutagen
 RUN pip3 install requests
-RUN pip3 install youtube_dl
+RUN pip3 install -U yt-dlp
 RUN pip3 install apscheduler
 RUN pip3 install pyromod
 RUN pip3 install psutil
