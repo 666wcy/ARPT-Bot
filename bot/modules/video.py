@@ -1,7 +1,7 @@
 import threading
 import requests
 from config import App_title
-import youtube_dl
+import yt_dlp
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from modules.control import run_rclone
 import sys
@@ -59,13 +59,13 @@ class Download_video():
             sys.stdout.flush()
 
             ydl_opts = {
-                'format': "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best[ext=flv]/best' --merge-output-format mp4",
+                'format':"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best[ext=flv]/best' --merge-output-format mp4",
                 'quiet': True,
                 'no_warnings': True,
                 'progress_hooks': [self.download_video_status]
             }
 
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 result = ydl.extract_info(
                     url=web_url,
                     download=True)
@@ -106,7 +106,7 @@ class Download_video():
 
             sys.stdout.flush()
             if "video" in self.call.data:
-                self.client.send_video(chat_id=self.call.message.chat.id, video=video_name, caption=caption,
+                self.client.send_video(chat_id=self.call.message.chat.id, video=f"/{video_name}", caption=caption,
                                        progress=progress,
                                        progress_args=(self.client, self.info, video_name,))
             elif "mp3" in self.call.data:
@@ -117,7 +117,7 @@ class Download_video():
                                               parse_mode='markdown')
                 audio_name = tem + ".mp3"
                 os.system(f"ffmpeg -i \"{video_name}\" -f mp3 -vn \"{audio_name}\"")
-                self.client.send_audio(chat_id=self.call.message.chat.id, audio=audio_name, progress=progress,
+                self.client.send_audio(chat_id=self.call.message.chat.id, audio=f"/{audio_name}", progress=progress,
                                        progress_args=(self.client, self.info, audio_name,))
                 os.remove(audio_name)
 
@@ -127,26 +127,25 @@ class Download_video():
 
 def get_video_info(client, message, url):
     try:
-        print(url)
+
         sys.stdout.flush()
-        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+        ydl = yt_dlp.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
         result = ydl.extract_info(
             url=url,
             download=False,
 
         )
-        # print(result)
+
         video_name = result['title']
-        video_description = result['description']
-        video_img = result['thumbnails'][len(result['thumbnails']) - 1]["url"]
-        video_uploader = result['uploader']
+        video_description = result["entries"][0]['description']
+        video_img = result["entries"][0]['thumbnail']
+        video_uploader = result["entries"][0]['uploader']
         web_url = result['webpage_url']
         text = f"视频名称：{video_name}\n" \
                f"作者:{video_uploader}\n" \
                f"web_url:{web_url}\n" \
                f"简介：{video_description}\n"
-        print(text)
-        print(video_img)
+
         sys.stdout.flush()
     except Exception as e:
         client.send_message(chat_id=message.chat.id, text=f"无法获取视频信息:\n{e}", parse_mode='markdown')
