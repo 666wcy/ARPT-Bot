@@ -62,6 +62,7 @@ class Download_video():
                 'format':"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best[ext=flv]/best' --merge-output-format mp4",
                 'quiet': True,
                 'no_warnings': True,
+                'noplaylist': True,
                 'progress_hooks': [self.download_video_status]
             }
 
@@ -129,18 +130,27 @@ def get_video_info(client, message, url):
     try:
 
         sys.stdout.flush()
-        ydl = yt_dlp.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
-        result = ydl.extract_info(
-            url=url,
-            download=False,
+        ydl_opts = {
 
-        )
+            'noplaylist': "True",
+            'force-ipv4': 'True'
+
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(
+                url=url,
+                download=False)
+
+        print(result)
+        sys.stdout.flush()
 
         video_name = result['title']
-        video_description = result["entries"][0]['description']
-        video_img = result["entries"][0]['thumbnail']
-        video_uploader = result["entries"][0]['uploader']
+        video_description = result['description']
+        video_img = result['thumbnails'][len(result['thumbnails']) - 1]["url"]
+        video_uploader = result['uploader']
         web_url = result['webpage_url']
+
         text = f"视频名称：{video_name}\n" \
                f"作者:{video_uploader}\n" \
                f"web_url:{web_url}\n" \
