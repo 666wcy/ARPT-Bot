@@ -46,7 +46,7 @@ def change_password():
     }
 
     change_result = requests.put(url=change_url, json=zh_data, headers=headers)
-    
+
     if change_result.status_code==403:
         headers['X-Auth']=html.text
         change_result = requests.put(url=change_url, json=zh_data, headers=headers)
