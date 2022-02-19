@@ -620,14 +620,14 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
         while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
 
             job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
-            
+            print(job_status)
             if "transferring" in job_status:
 
                 if job_status['transferring'][0]['eta'] == None:
                     eta = "暂无"
                 else:
                     eta = cal_time(job_status['transferring'][0]['eta'])
-                
+                print(f"剩余时间:{eta}")
 
                 text = f"任务ID:`{jobid}`\n" \
                        f"任务名称:`{title}`\n" \
@@ -669,14 +669,14 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
         while requests.post(url=rcd_status_url, json={"jobid": jobid}).json()['finished'] == False:
 
             job_status = requests.post(url=f"{rc_url}/core/stats", json={"group": f"job/{jobid}"}).json()
-            
+            print(job_status)
             if "transferring" in job_status:
 
                 if job_status['eta'] == None:
                     eta = "暂无"
                 else:
                     eta = cal_time(job_status['eta'])
-                
+                print(f"剩余时间:{eta}")
 
                 text = f"任务ID:`{jobid}`\n" \
                        f"任务名称:`{title}`\n" \
@@ -703,7 +703,7 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
     print("上传结束")
     try:
         if Rclone_share==False:
-            await client.send_message(text=f"{title}\n上传结束",chat_id=info.chat.id)
+            await client.send_message(text=f"任务完成\n{text}",chat_id=info.chat.id)
             return
         else:
             if int(file_num) == 1:
@@ -714,7 +714,7 @@ async def run_await_rclone(dir,title,info,file_num,client, message,gid):
             print(f"获取分享链接:{upload_shell}")
             val = os.popen(upload_shell)
             share_url = val.read()
-            await client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}", chat_id=info.chat.id)
+            await client.send_message(text=f"{title}\n上传结束\n文件链接：{share_url}\n{text}", chat_id=info.chat.id)
             os.remove(f"{name}.log")
             task.remove(gid)
             return

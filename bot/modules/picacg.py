@@ -424,13 +424,14 @@ def add_download(client,call):
         print("压缩完成，开始上传")
         del_path(title)
         try:
+            client.delete_messages(message_chat_id, message_id)
             run_rclone(dir=f"/{name}",title=title,info=info,file_num=1,client=client,message=call,gid=0)
             print("uploading")
         except Exception as e:
             print(f"{e}")
             sys.stdout.flush()
             client.send_message(message_chat_id, text="文件上传失败")
-        client.delete_message(message_chat_id, message_id)
+        
         os.system("rm '" + name + "'")
 
 
@@ -513,6 +514,7 @@ def add_downloadtg(client, call):
     print("压缩完成，开始上传")
     del_path(title)
     try:
+        client.delete_messages(message_chat_id, message_id)
         client.send_document(chat_id=info.chat.id, document=name, caption=title, progress=progress,
                              progress_args=(client, info, title,))
 
@@ -521,7 +523,7 @@ def add_downloadtg(client, call):
         print(f"{e}")
         sys.stdout.flush()
         client.send_message(message_chat_id, text="文件上传失败")
-    client.delete_message(message_chat_id, message_id)
+    
     os.system("rm '" + name + "'")
 
 

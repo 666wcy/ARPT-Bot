@@ -144,7 +144,7 @@ async def download_nhentai_id_call(client, call):
             try:
                 name = zip_ya(path)
                 print(name)
-                print("压缩完成，开始上传")
+
                 await client.edit_message_text(text="压缩完成，开始上传", chat_id=info.chat.id, message_id=info.message_id,
                                                parse_mode='markdown')
                 del_path(path)
@@ -153,13 +153,14 @@ async def download_nhentai_id_call(client, call):
                                                parse_mode='markdown')
                 return
             try:
+                await client.delete_messages(info.chat.id, info.message_id)
                 await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info,gid=0)
                 print("uploading")
             except Exception as e:
                 print(f"{e}")
                 sys.stdout.flush()
                 client.send_message(info.chat.id, text=f"文件上传失败:\n{e}")
-            client.delete_message(info.chat.id, info.message_id)
+
             os.system("rm '" + name + "'")
 
         elif choice=="tele" :
@@ -283,7 +284,7 @@ async def download_nhentai_id(client, message):
             try:
                 name = zip_ya(path)
                 print(name)
-                print("压缩完成，开始上传")
+
                 time.sleep(1)
                 await client.edit_message_text(text="压缩完成，开始上传", chat_id=info.chat.id, message_id=info.message_id,
                                                parse_mode='markdown')
@@ -344,13 +345,15 @@ async def download_nhentai_id(client, message):
                                                parse_mode='markdown')
                 return
             try:
+                await client.delete_messages(chat_id=info.chat.id, message_ids=info.message_id)
                 await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info,gid=0)
                 print("uploading")
             except Exception as e:
                 print(f"{e}")
                 sys.stdout.flush()
-                client.send_message(info.chat.id, text=f"文件上传失败:\n{e}")
-            client.delete_messages(info.chat.id, info.message_id)
+                await client.send_message(info.chat.id, text=f"文件上传失败:\n{e}")
+
+
             os.system("rm '" + name + "'")
 
         elif choice=="tele" :

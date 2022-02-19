@@ -252,13 +252,14 @@ async def single_download_call(client, call):
                                                parse_mode='markdown')
                 return
             try:
+                await client.delete_messages(info.chat.id, info.message_id)
                 await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info,gid=0)
                 print("uploading")
             except Exception as e:
                 print(f"{e}")
                 sys.stdout.flush()
                 client.send_message(info.chat.id, text=f"文件上传失败:\n{e}")
-            client.delete_message(info.chat.id, info.message_id)
+            
             os.system("rm '" + name + "'")
 
         elif choice=="tele" :
@@ -444,13 +445,14 @@ async def single_download(client, message):
                                                parse_mode='markdown')
                 return
             try:
+                await client.delete_messages(info.chat.id, info.message_id)
                 await run_await_rclone(dir=name, title=name, info=info, file_num=1, client=client, message=info,gid=0)
                 print("uploading")
             except Exception as e:
                 print(f"{e}")
                 sys.stdout.flush()
                 client.send_message(info.chat.id, text=f"文件上传失败:\n{e}")
-            client.delete_message(info.chat.id, info.message_id)
+            
             os.system("rm '" + name + "'")
 
         elif choice=="tele" :
